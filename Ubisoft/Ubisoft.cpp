@@ -144,11 +144,8 @@ int main() {
 	free(vx);
 	free(vy);*/
 	
-	SpriteManager *spriteM = new SpriteManager(shader_programme);
-	spriteM->AddSprite(vertex_buffer1, index_buffer, "../data/player0000.png");
-	
 	Sprite *sprite = new Sprite(vertex_buffer2, index_buffer, vertex_num, index_num);
-	spriteM->AddSprite(sprite, "../data/player0000/png");
+	sprite->Init(shader_programme, "../data/player0000.png");
 
 	while (!glfwWindowShouldClose(window)) {
 		//..... Randare................. 
@@ -157,9 +154,8 @@ int main() {
 		// spunem ce shader vom folosi pentru desenare
 		glUseProgram(shader_programme);
 
-		//sprite->Draw();
-		spriteM->DrawSprites();
-
+		sprite->Draw();
+		
 		// facem swap la buffere (Double buffer)
 		glfwSwapBuffers(window);
 
