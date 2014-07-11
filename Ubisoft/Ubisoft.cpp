@@ -89,9 +89,6 @@ int main() {
 	delete[] vertex_shader;
 	delete[] fragment_shader;
 
-	int vertex_num = 12;
-	int index_num = 6;
-	
 	/* PATRAT */
 	float vertex_buffer1[] = {
 		-0.75f, -0.25f, 0.0f,
@@ -99,12 +96,19 @@ int main() {
 		-0.25f, -0.75f, 0.0f,
 		-0.25f, -0.25f, 0.0f
 	};
-
+	
 	float vertex_buffer2[] = {
 		-0.75f, 0.75f, 0.0f,
 		-0.75f, 0.25f, 0.0f,
 		-0.25f, 0.25f, 0.0f,
 		-0.25f, 0.75f, 0.0f
+	};
+
+	float texture_buffer[] = {
+		0.0f, 1.0f,
+		0.0f, 0.0f,
+		1.0f, 0.0f,
+		1.0f, 1.0f
 	};
 
 	unsigned int index_buffer[] = {
@@ -144,7 +148,7 @@ int main() {
 	free(vx);
 	free(vy);*/
 	
-	Sprite *sprite = new Sprite(vertex_buffer2, index_buffer, vertex_num, index_num);
+	Sprite *sprite = new Sprite(vertex_buffer2, texture_buffer, index_buffer);
 	sprite->Init(shader_programme, "../data/player0000.png");
 
 	while (!glfwWindowShouldClose(window)) {
@@ -163,6 +167,6 @@ int main() {
 	}
 
 	glfwTerminate();
-	
+	free(sprite);
 	return 0;
 }

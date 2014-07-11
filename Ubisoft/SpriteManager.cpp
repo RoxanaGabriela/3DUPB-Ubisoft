@@ -4,25 +4,28 @@
 
 SpriteManager::SpriteManager()
 {
-	vertex_buffer_global = NULL;
 	shader_programme = 0;
 }
 
 SpriteManager::SpriteManager(GLuint shader_programme)
 {
-	vertex_buffer_global = NULL;
 	this->shader_programme = shader_programme;
 }
 
 SpriteManager::~SpriteManager()
 {
+	for (int i = 0; i < sprites.size(); i++) {
+		free(sprites[i]);
+	}
+	sprites.clear();
 }
 
-void SpriteManager::AddSprite(float vertex_buffer[], unsigned int index_buffer[], const char *filename)
+void SpriteManager::AddSprite(float vertex_buffer[], float texture_buffer[], unsigned int index_buffer[], const char *filename)
 {
-	Sprite *sprite = new Sprite(vertex_buffer, index_buffer, 12, 6);
+	Sprite *sprite = new Sprite(vertex_buffer, texture_buffer, index_buffer);
 	sprite->Init(shader_programme, filename);
 	sprites.push_back(sprite);
+	free(sprite);
 }
 
 void SpriteManager::AddSprite(Sprite *sprite, const char * filename)

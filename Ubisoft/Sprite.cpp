@@ -3,29 +3,28 @@
 
 Sprite::Sprite()
 {
-	vertex_num = 0;
-	index_num = 0;
-
 	vertex_buffer = NULL;
+	texture_buffer = NULL;
 	index_buffer = NULL;
 
 	vbo = 0;
+	tex_vbo = 0;
 	ibo = 0;
 	tex = 0;
 }
 
-Sprite::Sprite(float vertex_buffer[], unsigned int index_buffer[], int vertex_num, int index_num)
+Sprite::Sprite(float vertex_buffer[], float texture_buffer[], unsigned int index_buffer[])
 {
-	this->vertex_num = vertex_num;
-	this->index_num = index_num;
+	this->vertex_buffer = (float*)malloc(12 * sizeof(float));
+	this->texture_buffer = (float*)malloc(8 * sizeof(float));
+	this->index_buffer = (unsigned int*)malloc(6 * sizeof(unsigned int));
 
-	this->vertex_buffer = (float*)calloc(vertex_num, sizeof(float));
-	this->index_buffer = (unsigned int*)calloc(index_num, sizeof(unsigned int));
-
-	for (int i = 0; i < vertex_num; i++) this->vertex_buffer[i] = vertex_buffer[i];
-	for (int i = 0; i < index_num; i++) this->index_buffer[i] = index_buffer[i];
+	for (int i = 0; i < 12; i++) this->vertex_buffer[i] = vertex_buffer[i];
+	for (int i = 0; i < 8; i++) this->texture_buffer[i] = texture_buffer[i];
+	for (int i = 0; i < 6; i++) this->index_buffer[i] = index_buffer[i];
 
 	vbo = 0;
+	tex_vbo = 0;
 	ibo = 0;
 	tex = 0;
 }
@@ -33,6 +32,7 @@ Sprite::Sprite(float vertex_buffer[], unsigned int index_buffer[], int vertex_nu
 Sprite::~Sprite()
 {
 	free(vertex_buffer);
+	free(texture_buffer);
 	free(index_buffer);
 }
 
@@ -41,11 +41,18 @@ void Sprite::Init(GLuint shader_programme, const char *filename)
 	// Generam un buffer in memoria video si scriem in el punctele din ram
 	glGenBuffers(1, &vbo); // generam un buffer 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo); // setam bufferul generat ca bufferul curent 
-	glBufferData(GL_ARRAY_BUFFER, vertex_num * sizeof(float), vertex_buffer, GL_STATIC_DRAW); //  scriem in bufferul din memoria video informatia din bufferul din memoria RAM
+	glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), vertex_buffer, GL_STATIC_DRAW); //  scriem in bufferul din memoria video informatia din bufferul din memoria RAM
+
+	// Generam un buffer in memoria video si scriem in el punctele din ram
+	glGenBuffers(1, &tex_vbo); // generam un buffer 
+	glBindBuffer(GL_ARRAY_BUFFER, tex_vbo); // setam bufferul generat ca bufferul curent 
+	glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(float), texture_buffer, GL_STATIC_DRAW); //  scriem in bufferul din memoria video informatia din bufferul din memoria RAM
 
 	glGenBuffers(1, &ibo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_num * sizeof(unsigned int), index_buffer, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), index_buffer, GL_STATIC_DRAW);
+
+	this->shader_programme = shader_programme;
 
 	// incarcam imaginea din fisier si ii fortam canalele RGBA
 	int x, y, n;
@@ -71,20 +78,40 @@ void Sprite::Init(GLuint shader_programme, const char *filename)
 	// De partea aceasta am uitat sa va spun la curs -> Pentru a defini bufferul alocat de opengl ca fiind buffer de in de atribute, stream de vertecsi trebuie sa :
 	// 1. Ii spunem OpenGL-ului ca vom avea un slot pentru acest atribut (in cazul nostru 0) , daca mai aveam vreun atribut ar fi trebuit si acela enablat pe alt slot (de exemplu 1)
 	// 2. Definit bufferul ca Vertex Attribute Pointer cu glVertexAttribPointer
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	GLint pos_loc = glGetAttribLocation(shader_programme, "vertex_position");
 	glEnableVertexAttribArray(pos_loc);
 	glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-	GLint tex_loc = glGetUniformLocation(shader_programme, "basic_texture");
+	glBindBuffer(GL_ARRAY_BUFFER, tex_vbo);
+	GLint tex_loc = glGetAttribLocation(shader_programme, "texture_coordinates");
+	glEnableVertexAttribArray(tex_loc);
+	glVertexAttribPointer(tex_loc, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	GLint tex = glGetUniformLocation(shader_programme, "basic_texture");
 	glUseProgram(shader_programme);
-	glUniform1i(tex_loc, 0); // use active texture 0
+	glUniform1i(tex, 0); // use active texture 0
 }
 
 void Sprite::Draw()
 {
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	GLint pos_loc = glGetAttribLocation(shader_programme, "vertex_position");
+	glEnableVertexAttribArray(pos_loc);
+	glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	glBindBuffer(GL_ARRAY_BUFFER, tex_vbo);
+	GLint tex_loc = glGetAttribLocation(shader_programme, "texture_coordinates");
+	glEnableVertexAttribArray(tex_loc);
+	glVertexAttribPointer(tex_loc, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	GLint tex = glGetUniformLocation(shader_programme, "basic_texture");
+	glUseProgram(shader_programme);
+	glUniform1i(tex, 0); // use active texture 0
+
 	// Index buffer
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-	glDrawElements(GL_TRIANGLES, index_num, GL_UNSIGNED_INT, (void*)0);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
 }
 
 // exemplu de implementare
