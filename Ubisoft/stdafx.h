@@ -13,3 +13,12 @@
 // TODO: reference additional headers your program requires here
 #include <string.h>
 #include <math.h>
+#include <time.h>
+
+#include <GL/glew.h> // include GLEW and new version of GL on Windows
+#include <GLFW32/glfw3.h> // GLFW helper library
+#include "glm\glm.hpp"
+
+#define LINE 0
+#define CIRCLE 1
+#define SIN 2

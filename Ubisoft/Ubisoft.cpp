@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "stb_image.h"
-#include <GL/glew.h> // include GLEW and new version of GL on Windows
-#include <GLFW32/glfw3.h> // GLFW helper library
 #include "SpriteManager.h"
+#include "Player.h"
+#include "Enemy.h"
+#include <vector>
 
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
@@ -17,6 +18,8 @@
 #endif
 #endif  // _DEBUG
 
+Player *player;
+std::vector<Enemy*> enemies;
 // functie banala de incarcat continutul unui fisier intr-un buffer
 char * LoadFileInMemory(const char *filename)
 {
@@ -38,6 +41,31 @@ char * LoadFileInMemory(const char *filename)
 	fclose(f);
 	buffer[size] = 0;
 	return buffer;
+}
+
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, GL_TRUE);
+	else if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
+		player->moveOY(0.1f);
+		player->show();
+	}
+	else if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
+		player->moveOY(-0.1f);
+		player->show();
+	}
+	else if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
+		player->moveOX(-0.1f);
+		player->show();
+	}
+	else if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
+		player->moveOX(0.1f);
+		player->show();
+	}
+	else if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+
+	}
 }
 
 int main() {
@@ -148,25 +176,36 @@ int main() {
 	free(vx);
 	free(vy);*/
 	
-	Sprite *sprite = new Sprite(vertex_buffer2, texture_buffer, index_buffer);
-	sprite->Init(shader_programme, "../data/player0000.png");
+	player = new Player(vertex_buffer1, texture_buffer, index_buffer);
+	player->Init(shader_programme, "../data/player0000.png");
 
+	enemies.push_back(new Enemy(vertex_buffer2, texture_buffer, index_buffer));
+	for (int i = 0; i < enemies.size(); i++)
+		enemies[i]->Init(shader_programme, "../data/crescent0000.png");
+
+	glfwSetKeyCallback(window, key_callback);
 	while (!glfwWindowShouldClose(window)) {
 		//..... Randare................. 
 		// stergem ce s-a desenat anterior
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		// spunem ce shader vom folosi pentru desenare
 		glUseProgram(shader_programme);
-
-		sprite->Draw();
 		
+		player->Draw();
+		for (int i = 0; i < enemies.size(); i++)
+			enemies[i]->Draw();
+
 		// facem swap la buffere (Double buffer)
 		glfwSwapBuffers(window);
 
 		glfwPollEvents();
 	}
 
+	glfwDestroyWindow(window);
 	glfwTerminate();
-	free(sprite);
+	free(player);
+	for (int i = 0; i < enemies.size(); i++)
+		free(enemies[i]);
+	enemies.clear();
 	return 0;
 }

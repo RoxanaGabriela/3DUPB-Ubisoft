@@ -136,3 +136,13 @@ void Sprite::FlipTexture(unsigned char* image_data, int x, int y, int n)
 		}
 	}
 }
+
+void Sprite::show()
+{
+	for (int i = 0; i < 12; i += 3) {
+		printf("%.2f ", vertex_buffer[i]);
+		printf("%.2f ", vertex_buffer[i + 1]);
+		printf("%.2f\n", vertex_buffer[i + 2]);
+	}
+	printf("\n");
+}
