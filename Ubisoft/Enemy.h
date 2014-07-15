@@ -4,10 +4,13 @@
 class Enemy
 {
 private:
-	Sprite *enemy;
 	short type;
+	int dir;
 
 public:
+	Sprite *enemy;
+	int life;
+
 	Enemy();
 	Enemy(float vertex_buffer[], float texture_buffer[], unsigned int index_buffer[]);
 	~Enemy();
@@ -18,6 +21,7 @@ public:
 	void moveLine(float tx);
 	void moveCircle(float r, float angle);
 	void moveSin(float angle);
+	void move();
 
 	void show();
 };

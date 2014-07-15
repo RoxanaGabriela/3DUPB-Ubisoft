@@ -1,18 +1,29 @@
-﻿Build started 7/12/2014 3:20:27 PM.
+﻿Build started 7/16/2014 12:29:12 AM.
      1>Project "C:\Users\roxan_000\Desktop\Ubisoft\3DUPB-Ubisoft-master\Ubisoft\Ubisoft.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I"C:\Users\roxan_000\Desktop\Ubisoft\3DUPB-Ubisoft-master\/include" /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _CRT_SECURE_NO_WARNINGS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Debug\Ubisoft.pch" /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Enemy.cpp Ubisoft.cpp
          Ubisoft.cpp
-     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\ubisoft.cpp(183): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\ubisoft.cpp(195): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\ubisoft.cpp(207): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\loaded_textures.h(29): warning C4244: '=' : conversion from 'int' to 'float', possible loss of data
+     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\loaded_textures.h(30): warning C4244: '=' : conversion from 'int' to 'float', possible loss of data
+     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\ubisoft.cpp(33): warning C4129: ' ' : unrecognized character escape sequence
+     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\ubisoft.cpp(90): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\ubisoft.cpp(151): warning C4129: ' ' : unrecognized character escape sequence
+     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\ubisoft.cpp(161): warning C4129: ' ' : unrecognized character escape sequence
+     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\ubisoft.cpp(240): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\ubisoft.cpp(256): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\ubisoft.cpp(258): warning C4305: 'argument' : truncation from 'double' to 'float'
+     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\ubisoft.cpp(265): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\ubisoft.cpp(284): warning C4018: '<' : signed/unsigned mismatch
          Enemy.cpp
-     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\enemy.cpp(24): warning C4244: 'argument' : conversion from 'time_t' to 'unsigned int', possible loss of data
+     1>c:\users\roxan_000\desktop\ubisoft\3dupb-ubisoft-master\ubisoft\enemy.cpp(26): warning C4244: 'argument' : conversion from 'time_t' to 'unsigned int', possible loss of data
          Generating Code...
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\roxan_000\Desktop\Ubisoft\3DUPB-Ubisoft-master\Debug\Ubisoft.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Users\roxan_000\Desktop\Ubisoft\3DUPB-Ubisoft-master\/lib/x86" glew32.lib glfw3dll.lib opengl32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\roxan_000\Desktop\Ubisoft\3DUPB-Ubisoft-master\Debug\Ubisoft.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\roxan_000\Desktop\Ubisoft\3DUPB-Ubisoft-master\Debug\Ubisoft.lib" /MACHINE:X86 Debug\Ubisoft.res
+         Debug\Camera.obj
          Debug\Enemy.obj
+         Debug\Loaded_Textures.obj
          Debug\Player.obj
+         Debug\Projectile.obj
          Debug\Sprite.obj
          Debug\SpriteManager.obj
          Debug\stb_image.obj
@@ -23,4 +34,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:06.38
+Time Elapsed 00:00:01.23

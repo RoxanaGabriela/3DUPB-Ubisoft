@@ -3,13 +3,14 @@
 #include "SpriteManager.h"
 #include "Player.h"
 #include "Enemy.h"
+#include "Projectile.h"
+#include "Loaded_Textures.h"
 #include <vector>
+#include <map>
 
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
 #include <crtdbg.h>
-
-#define PI 3.1415926f
 
 #ifdef _DEBUG
 #ifndef DBG_NEW
@@ -20,6 +21,18 @@
 
 Player *player;
 std::vector<Enemy*> enemies;
+std::vector<Projectile*> projectiles;
+GLuint shader_programme;
+
+void _print_shader_info_log(GLuint shader_index)
+{
+	int max_length = 2048;
+	int actual_length = 0;
+	char log[2048];
+	glGetShaderInfoLog(shader_index, max_length, &actual_length, log);
+	printf(" shader info log for GL index %u:\ n% s\ n", shader_index, log);
+}
+
 // functie banala de incarcat continutul unui fisier intr-un buffer
 char * LoadFileInMemory(const char *filename)
 {
@@ -47,25 +60,50 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
-	else if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
-		player->moveOY(0.1f);
-		player->show();
+	else if (key == GLFW_KEY_UP) {
+		player->moveOY(0.01f);
 	}
-	else if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
-		player->moveOY(-0.1f);
-		player->show();
+	else if (key == GLFW_KEY_DOWN) {
+		player->moveOY(-0.01f);
 	}
-	else if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
-		player->moveOX(-0.1f);
-		player->show();
+	else if (key == GLFW_KEY_LEFT) {
+		player->moveOX(-0.01f);
 	}
-	else if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
-		player->moveOX(0.1f);
-		player->show();
+	else if (key == GLFW_KEY_RIGHT) {
+		player->moveOX(0.01f);
+	}
+	else if (key == GLFW_KEY_X) {
+		player->rotate(PI / 12);
+	}
+	else if (key == GLFW_KEY_C) {
+		player->rotate(-PI / 12);
 	}
 	else if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
-
+		printf("New projectile!!!\n");
+		projectiles.push_back(new Projectile(player->player->vertex_buffer, player->player->texture_buffer, player->player->index_buffer));
+		projectiles[projectiles.size() - 1]->Init(shader_programme, "../data/rocket_type_A0000.png");
 	}
+}
+
+int collide(Enemy *enemy, std::vector<Projectile*> *projectiles)
+{
+	for (int i = 0; i < projectiles->size(); i++) {
+		if (enemy->enemy->minX() < projectiles->at(i)->projectile->maxX() &&
+			enemy->enemy->maxX() > projectiles->at(i)->projectile->minX() &&
+			enemy->enemy->minY() < projectiles->at(i)->projectile->maxY() &&
+			enemy->enemy->maxY() > projectiles->at(i)->projectile->minX()) {
+
+			free(projectiles->at(i));
+			projectiles->erase(projectiles->begin() + i);
+			enemy->life--;
+			printf("Collision detected!!!! life = %d\n", enemy->life);
+
+			if (enemy->life == 0) {
+				return TRUE;
+			}
+		}
+	}
+	return FALSE;
 }
 
 int main() {
@@ -103,13 +141,28 @@ int main() {
 	const char * fragment_shader = LoadFileInMemory("../data/pixelShader.glsl");
 	if (fragment_shader == NULL) fprintf(stderr, "Error openning pixel shader!\n");
 
+	int params;
 	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vs, 1, &vertex_shader, NULL);
 	glCompileShader(vs);
+	glGetShaderiv(vs, GL_COMPILE_STATUS, &params); // iei statusul 
+	if (GL_TRUE != params)
+	{
+		fprintf(stderr, "ERROR : GL shader index %i did not compile\ n", vs);
+		_print_shader_info_log(vs); return false; // or exit or something 
+	}
+
 	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fs, 1, &fragment_shader, NULL);
 	glCompileShader(fs);
-	GLuint shader_programme = glCreateProgram();
+	glGetShaderiv(fs, GL_COMPILE_STATUS, &params); // iei statusul 
+	if (GL_TRUE != params)
+	{
+		fprintf(stderr, "ERROR : GL shader index %i did not compile\ n", fs);
+		_print_shader_info_log(fs); return false; // or exit or something 
+	}
+
+	shader_programme = glCreateProgram();
 	glAttachShader(shader_programme, fs);
 	glAttachShader(shader_programme, vs);
 	glLinkProgram(shader_programme);
@@ -119,17 +172,17 @@ int main() {
 
 	/* PATRAT */
 	float vertex_buffer1[] = {
-		-0.75f, -0.25f, 0.0f,
-		-0.75f, -0.75f, 0.0f,
-		-0.25f, -0.75f, 0.0f,
-		-0.25f, -0.25f, 0.0f
+		0.15f, -0.65f, 0.0f,
+		0.15f, -0.95f, 0.0f,
+		-0.15f, -0.95f, 0.0f,
+		-0.15f, -0.65f, 0.0f,
 	};
 	
 	float vertex_buffer2[] = {
-		-0.75f, 0.75f, 0.0f,
-		-0.75f, 0.25f, 0.0f,
-		-0.25f, 0.25f, 0.0f,
-		-0.25f, 0.75f, 0.0f
+		-0.65f, 0.65f, 0.0f,
+		-0.65f, 0.35f, 0.0f,
+		-0.95f, 0.35f, 0.0f,
+		-0.95f, 0.65f, 0.0f
 	};
 
 	float texture_buffer[] = {
@@ -175,13 +228,21 @@ int main() {
 	}
 	free(vx);
 	free(vy);*/
+	//Loaded_Textures *loadedTextures = new Loaded_Textures(shader_programme);
+	//loadedTextures->Load();
 	
 	player = new Player(vertex_buffer1, texture_buffer, index_buffer);
 	player->Init(shader_programme, "../data/player0000.png");
 
-	enemies.push_back(new Enemy(vertex_buffer2, texture_buffer, index_buffer));
+	for (int i = 0; i < 4; i++)
+		enemies.push_back(new Enemy(vertex_buffer2, texture_buffer, index_buffer));
+	
 	for (int i = 0; i < enemies.size(); i++)
 		enemies[i]->Init(shader_programme, "../data/crescent0000.png");
+
+	// Enable blending
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glfwSetKeyCallback(window, key_callback);
 	while (!glfwWindowShouldClose(window)) {
@@ -192,8 +253,24 @@ int main() {
 		glUseProgram(shader_programme);
 		
 		player->Draw();
-		for (int i = 0; i < enemies.size(); i++)
+		for (int i = 0; i < projectiles.size(); i++) {
+			projectiles[i]->Draw();
+			projectiles[i]->move(0.0005);
+			if (projectiles[i]->projectile->minY() >= 1) {
+				free(projectiles[i]);
+				projectiles.erase(projectiles.begin() + i);
+				printf("Delete projectile!!!!\n");
+			}
+		}
+		for (int i = 0; i < enemies.size(); i++) {
 			enemies[i]->Draw();
+			enemies[i]->move();
+			if (collide(enemies[i], &projectiles) == TRUE) {
+				printf("Gooood!!!!\n");
+				free(enemies[i]);
+				enemies.erase(enemies.begin() + i);
+			}
+		}
 
 		// facem swap la buffere (Double buffer)
 		glfwSwapBuffers(window);

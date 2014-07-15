@@ -58,7 +58,7 @@ void Sprite::Init(GLuint shader_programme, const char *filename)
 	int x, y, n;
 	int force_channels = 4;
 	unsigned char* image_data = stbi_load(filename, &x, &y, &n, force_channels);
-	if (image_data == NULL) fprintf(stderr, "Error loading player image!\n");
+	if (image_data == NULL) fprintf(stderr, "Error loading sprite %s image!\n", filename);
 
 	// Facem flip pe textura 
 	FlipTexture(image_data, x, y, n);
@@ -79,35 +79,36 @@ void Sprite::Init(GLuint shader_programme, const char *filename)
 	// 1. Ii spunem OpenGL-ului ca vom avea un slot pentru acest atribut (in cazul nostru 0) , daca mai aveam vreun atribut ar fi trebuit si acela enablat pe alt slot (de exemplu 1)
 	// 2. Definit bufferul ca Vertex Attribute Pointer cu glVertexAttribPointer
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	GLint pos_loc = glGetAttribLocation(shader_programme, "vertex_position");
+	pos_loc = glGetAttribLocation(shader_programme, "vertex_position");
 	glEnableVertexAttribArray(pos_loc);
 	glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	glBindBuffer(GL_ARRAY_BUFFER, tex_vbo);
-	GLint tex_loc = glGetAttribLocation(shader_programme, "texture_coordinates");
+	tex_loc = glGetAttribLocation(shader_programme, "texture_coordinates");
 	glEnableVertexAttribArray(tex_loc);
 	glVertexAttribPointer(tex_loc, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 
-	GLint tex = glGetUniformLocation(shader_programme, "basic_texture");
+	basic_tex = glGetUniformLocation(shader_programme, "basic_texture");
 	glUseProgram(shader_programme);
-	glUniform1i(tex, 0); // use active texture 0
+	glUniform1i(basic_tex, 0); // use active texture 0
 }
 
 void Sprite::Draw()
 {
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex);
+
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	GLint pos_loc = glGetAttribLocation(shader_programme, "vertex_position");
+	glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), vertex_buffer, GL_STATIC_DRAW); //  scriem in bufferul din memoria video informatia din ram
 	glEnableVertexAttribArray(pos_loc);
 	glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	glBindBuffer(GL_ARRAY_BUFFER, tex_vbo);
-	GLint tex_loc = glGetAttribLocation(shader_programme, "texture_coordinates");
 	glEnableVertexAttribArray(tex_loc);
 	glVertexAttribPointer(tex_loc, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 
-	GLint tex = glGetUniformLocation(shader_programme, "basic_texture");
 	glUseProgram(shader_programme);
-	glUniform1i(tex, 0); // use active texture 0
+	glUniform1i(basic_tex, 0); // use active texture 0
 
 	// Index buffer
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
@@ -135,6 +136,43 @@ void Sprite::FlipTexture(unsigned char* image_data, int x, int y, int n)
 			bottom++;
 		}
 	}
+}
+
+float Sprite::minX()
+{
+	float minX = 1;
+	for (int i = 0; i < 12; i += 3) {
+		if (minX > vertex_buffer[i]) minX = vertex_buffer[i];
+	}
+	return minX;
+}
+
+float Sprite::maxX()
+{
+	float maxX = -1;
+	for (int i = 0; i < 12; i += 3) {
+		if (maxX < vertex_buffer[i]) maxX = vertex_buffer[i];
+	}
+	return maxX;
+}
+
+float Sprite::minY()
+{
+	float minY = 1;
+	for (int i = 0; i < 12; i += 3) {
+		if (minY > vertex_buffer[i + 1]) minY = vertex_buffer[i + 1];
+	}
+	return minY;
+}
+
+float Sprite::maxY()
+{
+	float maxY = -1;
+
+	for (int i = 0; i < 12; i += 3) {
+		if (maxY < vertex_buffer[i + 1]) maxY = vertex_buffer[i + 1];
+	}
+	return maxY;
 }
 
 void Sprite::show()

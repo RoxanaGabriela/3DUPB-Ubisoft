@@ -3,10 +3,9 @@
 
 class Player
 {
-private:
+public:
 	Sprite *player;
 
-public:
 	Player();
 	Player(float vertex_buffer[], float texture_buffer[], unsigned int index_buffer[]);
 	~Player();
@@ -16,7 +15,7 @@ public:
 
 	void moveOY(float ty);
 	void moveOX(float tx);
-
+	void rotate(float angle);
 	void show();
 };
 

@@ -12,6 +12,9 @@ private:
 	GLuint ibo;
 	GLuint tex;
 
+	GLint pos_loc;
+	GLint tex_loc;
+	GLint basic_tex;
 public:
 	float *vertex_buffer; // buffer cu vertecsi in RAM
 	float *texture_buffer;
@@ -26,6 +29,11 @@ public:
 	void Init(GLuint shader_programme, const char *filename);
 	void FlipTexture(unsigned char* image_data, int x, int y, int n);
 	void Draw();
+
+	float minX();
+	float maxX();
+	float minY();
+	float maxY();
 
 	void show();
 };
