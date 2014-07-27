@@ -4,6 +4,7 @@
 #include "Player.h"
 #include "Enemy.h"
 #include "Projectile.h"
+#include "Utils.h"
 #include "Loaded_Textures.h"
 #include <vector>
 #include <map>
@@ -19,42 +20,13 @@
 #endif
 #endif  // _DEBUG
 
+#define TIME_BETWEEN_PROJECTILES_MAX 500
+
 Player *player;
 std::vector<Enemy*> enemies;
 std::vector<Projectile*> projectiles;
 GLuint shader_programme;
-
-void _print_shader_info_log(GLuint shader_index)
-{
-	int max_length = 2048;
-	int actual_length = 0;
-	char log[2048];
-	glGetShaderInfoLog(shader_index, max_length, &actual_length, log);
-	printf(" shader info log for GL index %u:\ n% s\ n", shader_index, log);
-}
-
-// functie banala de incarcat continutul unui fisier intr-un buffer
-char * LoadFileInMemory(const char *filename)
-{
-	int size = 0;
-	char *buffer = NULL;
-	FILE *f = fopen(filename, "rb");
-	if (f == NULL)
-	{
-		return NULL;
-	}
-	fseek(f, 0, SEEK_END);
-	size = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	buffer = new char[size + 1];
-	if (size != fread(buffer, sizeof(char), size, f))
-	{
-		delete[] buffer;
-	}
-	fclose(f);
-	buffer[size] = 0;
-	return buffer;
-}
+int timeBetweenProjectiles;
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -78,33 +50,16 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	else if (key == GLFW_KEY_C) {
 		player->rotate(-PI / 12);
 	}
-	else if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+	else if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && timeBetweenProjectiles >= TIME_BETWEEN_PROJECTILES_MAX) {
 		printf("New projectile!!!\n");
-		projectiles.push_back(new Projectile(player->player->vertex_buffer, player->player->texture_buffer, player->player->index_buffer));
-		projectiles[projectiles.size() - 1]->Init(shader_programme, "../data/rocket_type_A0000.png");
+		projectiles.push_back(new Projectile(player->player->vertex_buffer, PLAYER));
+		projectiles[projectiles.size() - 1]->Init(shader_programme, "../data/Space/Rockets/rocket_type_A0000.png");
+
+		timeBetweenProjectiles = 0;
 	}
 }
 
-int collide(Enemy *enemy, std::vector<Projectile*> *projectiles)
-{
-	for (int i = 0; i < projectiles->size(); i++) {
-		if (enemy->enemy->minX() < projectiles->at(i)->projectile->maxX() &&
-			enemy->enemy->maxX() > projectiles->at(i)->projectile->minX() &&
-			enemy->enemy->minY() < projectiles->at(i)->projectile->maxY() &&
-			enemy->enemy->maxY() > projectiles->at(i)->projectile->minX()) {
 
-			free(projectiles->at(i));
-			projectiles->erase(projectiles->begin() + i);
-			enemy->life--;
-			printf("Collision detected!!!! life = %d\n", enemy->life);
-
-			if (enemy->life == 0) {
-				return TRUE;
-			}
-		}
-	}
-	return FALSE;
-}
 
 int main() {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -116,7 +71,7 @@ int main() {
 	}
 
 	// Se creeaza fereastra
-	GLFWwindow* window = glfwCreateWindow(640, 480, "Workshop1", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(640, 480, "Ubisoft", NULL, NULL);
 	if (!window) {
 		// nu am reusit sa facem fereastra, oprim totul si dam mesaj de eroare
 		printf("ERROR: could not open window with GLFW3\n");
@@ -170,33 +125,6 @@ int main() {
 	delete[] vertex_shader;
 	delete[] fragment_shader;
 
-	/* PATRAT */
-	float vertex_buffer1[] = {
-		0.15f, -0.65f, 0.0f,
-		0.15f, -0.95f, 0.0f,
-		-0.15f, -0.95f, 0.0f,
-		-0.15f, -0.65f, 0.0f,
-	};
-	
-	float vertex_buffer2[] = {
-		-0.65f, 0.65f, 0.0f,
-		-0.65f, 0.35f, 0.0f,
-		-0.95f, 0.35f, 0.0f,
-		-0.95f, 0.65f, 0.0f
-	};
-
-	float texture_buffer[] = {
-		0.0f, 1.0f,
-		0.0f, 0.0f,
-		1.0f, 0.0f,
-		1.0f, 1.0f
-	};
-
-	unsigned int index_buffer[] = {
-		0, 1, 3,
-		1, 2, 3
-	};
-	
 	/* CERC */
 	/*float *vx, *vy;
 	float r = 0.25f;
@@ -228,18 +156,41 @@ int main() {
 	}
 	free(vx);
 	free(vy);*/
-	//Loaded_Textures *loadedTextures = new Loaded_Textures(shader_programme);
-	//loadedTextures->Load();
+	/*Loaded_Textures *loadedTextures = new Loaded_Textures(shader_programme);
+	loadedTextures->Load();*/
+
+	float vertex_buffer[] = {
+		1.0f, 1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,
+		-1.0f, 1.0f, 0.0f
+	};
+
+	float texture_buffer[] = {
+		0.0f, 1.0f,
+		0.0f, 0.0f,
+		1.0f, 0.0f,
+		1.0f, 1.0f
+	};
+
+	unsigned int index_buffer[] = {
+		0, 1, 3,
+		1, 2, 3
+	};
+
+	Sprite* background = new Sprite(vertex_buffer, texture_buffer, index_buffer);
+	background->Init(shader_programme, "../data/Space/Backgrounds/Background1.png");
 	
-	player = new Player(vertex_buffer1, texture_buffer, index_buffer);
-	player->Init(shader_programme, "../data/player0000.png");
+	player = new Player();
+	player->Init(shader_programme, "../data/Space/Player/player0000.png");
 
 	for (int i = 0; i < 4; i++)
-		enemies.push_back(new Enemy(vertex_buffer2, texture_buffer, index_buffer));
+		enemies.push_back(new Enemy(i));
 	
 	for (int i = 0; i < enemies.size(); i++)
-		enemies[i]->Init(shader_programme, "../data/crescent0000.png");
+		enemies[i]->Init(shader_programme, "../data/Space/Enemies/scythe0000.png");
 
+	timeBetweenProjectiles = TIME_BETWEEN_PROJECTILES_MAX;
 	// Enable blending
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -252,7 +203,10 @@ int main() {
 		// spunem ce shader vom folosi pentru desenare
 		glUseProgram(shader_programme);
 		
+		timeBetweenProjectiles++;
+		background->Draw();
 		player->Draw();
+
 		for (int i = 0; i < projectiles.size(); i++) {
 			projectiles[i]->Draw();
 			projectiles[i]->move(0.0005);
@@ -263,12 +217,16 @@ int main() {
 			}
 		}
 		for (int i = 0; i < enemies.size(); i++) {
+			enemies[i]->Update();
 			enemies[i]->Draw();
 			enemies[i]->move();
-			if (collide(enemies[i], &projectiles) == TRUE) {
+			if (hit(enemies[i], &projectiles) == TRUE) {
 				printf("Gooood!!!!\n");
 				free(enemies[i]);
 				enemies.erase(enemies.begin() + i);
+			}
+			if (collide(player, enemies[i]) == TRUE) {
+				printf("GAME OVER!!!!\n");
 			}
 		}
 

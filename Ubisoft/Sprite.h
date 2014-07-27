@@ -11,11 +11,14 @@ private:
 	GLuint tex_vbo;
 	GLuint ibo;
 	GLuint tex;
+	GLuint pos;
 
 	GLint pos_loc;
 	GLint tex_loc;
+	GLint ModelMatrix_loc;
 	GLint basic_tex;
 public:
+	glm::vec3 position;
 	float *vertex_buffer; // buffer cu vertecsi in RAM
 	float *texture_buffer;
 	unsigned int *index_buffer; // buffer cu indecsii din RAM

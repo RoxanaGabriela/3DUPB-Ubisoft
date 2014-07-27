@@ -5,10 +5,24 @@
 Projectile::Projectile()
 {
 	projectile = NULL;
+	owner = -1;
 }
 
-Projectile::Projectile(float vertex_buffer[], float texture_buffer[], unsigned int index_buffer[])
+Projectile::Projectile(float vertex_buffer[], int owner)
 {
+	this->owner = owner;
+	float texture_buffer[] = {
+		0.0f, 1.0f,
+		0.0f, 0.0f,
+		1.0f, 0.0f,
+		1.0f, 1.0f
+	};
+
+	unsigned int index_buffer[] = {
+		0, 1, 3,
+		1, 2, 3
+	};
+
 	float minX = 1;
 	float maxX = -1;
 	float minY = 1;
@@ -21,13 +35,24 @@ Projectile::Projectile(float vertex_buffer[], float texture_buffer[], unsigned i
 		if (maxY < vertex_buffer[i + 1]) maxY = vertex_buffer[i + 1];
 	}
 
-	float vb[] = {
-		minX + (maxX - minX) / 4, maxY + 0.2f, 0.0f,
-		minX + (maxX - minX) / 4, maxY, 0.0f,
-		maxX - (maxX - minX) / 4, maxY, 0.0f,
-		maxX - (maxX - minX) / 4, maxY + 0.2f, 0.0f
-	};
-	projectile = new Sprite(vb, texture_buffer, index_buffer);
+	if (owner == PLAYER) {
+		float vb[] = {
+			minX + (maxX - minX) / 4, maxY + 0.2f, 0.0f,
+			minX + (maxX - minX) / 4, maxY, 0.0f,
+			maxX - (maxX - minX) / 4, maxY, 0.0f,
+			maxX - (maxX - minX) / 4, maxY + 0.2f, 0.0f
+		};
+		projectile = new Sprite(vb, texture_buffer, index_buffer);
+	}
+	else  {
+		float vb[] = {
+			minX + (maxX - minX) / 4 + (maxX - minX) / 8, minY, 0.0f,
+			minX + (maxX - minX) / 4 + (maxX - minX) / 8, minY - 0.1f, 0.0f,
+			maxX - (maxX - minX) / 4 - (maxX - minX) / 8, minY - 0.1f, 0.0f,
+			maxX - (maxX - minX) / 4 - (maxX - minX) / 8, minY, 0.0f
+		};
+		projectile = new Sprite(vb, texture_buffer, index_buffer);
+	}
 }
 
 Projectile::~Projectile()

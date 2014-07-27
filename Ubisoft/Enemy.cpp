@@ -1,14 +1,42 @@
 #include "stdafx.h"
 #include "Enemy.h"
+#include "Projectile.h"
+#include "Player.h"
 #include <stdlib.h>
 
 Enemy::Enemy()
 {
 }
 
-Enemy::Enemy(float vertex_buffer[], float texture_buffer[], unsigned int index_buffer[])
+Enemy::Enemy(int id)
 {
+	this->id = id;
+	timeBetweenProjectiles = MAX_TIME_BETWEEN_PROJECTILES - id * 500;
+
+	float vertex_buffer[] = {
+		-0.65f, 1.0f - id * 0.3, 0.0f,
+		-0.65f, 0.7f - id * 0.3, 0.0f,
+		-0.95f, 0.7f - id * 0.3, 0.0f,
+		-0.95f, 1.0f - id * 0.3, 0.0f
+	};
+
+	float texture_buffer[] = {
+		0.0f, 1.0f,
+		0.0f, 0.0f,
+		1.0f, 0.0f,
+		1.0f, 1.0f
+	};
+
+	unsigned int index_buffer[] = {
+		0, 1, 3,
+		1, 2, 3
+	};
+
 	enemy = new Sprite(vertex_buffer, texture_buffer, index_buffer);
+	
+	speed = rand() % 5;
+	speed /= 10000;
+
 }
 
 Enemy::~Enemy()
@@ -26,9 +54,27 @@ void Enemy::Init(int shader_programme, const char *filename)
 	srand(time(NULL));
 }
 
+void Enemy::Update()
+{
+	timeBetweenProjectiles++;
+
+	if (timeBetweenProjectiles >= MAX_TIME_BETWEEN_PROJECTILES) {
+		Projectile* projectile = new Projectile(enemy->vertex_buffer, ENEMY);
+		projectile->Init(enemy->shader_programme, "../data/Space/Rockets/rocket_type_B0008.png");
+		projectiles.push_back(projectile);
+
+		timeBetweenProjectiles = 0;
+	}
+}
+
 void Enemy::Draw()
 {
 	enemy->Draw();
+
+	for (int i = 0; i < projectiles.size(); i++) {
+		projectiles[i]->Draw();
+		projectiles[i]->move(-0.0005);
+	}
 }
 
 void Enemy::moveLine(float tx)
@@ -68,10 +114,10 @@ void Enemy::move()
 		if (enemy->maxX() >= 1) dir = LEFT;
 
 		if (dir == RIGHT) {
-			moveLine(0.0002f);
+			moveLine(speed);
 		}
 		else { // dir == LEFT
-			moveLine(-0.0002f);
+			moveLine(-speed);
 		}
 	}
 	else if (type == CIRCLE)

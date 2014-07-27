@@ -4,10 +4,27 @@
 
 Player::Player()
 {
-}
+	speed = 2.0f;
 
-Player::Player(float vertex_buffer[], float texture_buffer[], unsigned int index_buffer[])
-{
+	float vertex_buffer[] = {
+		0.15f, -0.65f, 0.0f,
+		0.15f, -0.95f, 0.0f,
+		-0.15f, -0.95f, 0.0f,
+		-0.15f, -0.65f, 0.0f,
+	};
+
+	float texture_buffer[] = {
+		0.0f, 1.0f,
+		0.0f, 0.0f,
+		1.0f, 0.0f,
+		1.0f, 1.0f
+	};
+
+	unsigned int index_buffer[] = {
+		0, 1, 3,
+		1, 2, 3
+	};
+
 	player = new Sprite(vertex_buffer, texture_buffer, index_buffer);
 }
 
@@ -19,6 +36,7 @@ Player::~Player()
 void Player::Init(int shader_programme, const char * filename)
 {
 	player->Init(shader_programme, filename);
+	life = 3;
 }
 
 void Player::Draw()
@@ -38,9 +56,6 @@ void Player::moveOY(float ty)
 		player->vertex_buffer[i + 1] = result.y;
 		player->vertex_buffer[i + 2] = result.z;
 	}
-	//GLuint transf_loc = glGetUniformLocation(player->shader_programme, "u_transfMatrix");
-	//glUniformMatrix4fv(transf_loc, 1, GL_FALSE, &transMatrix[0][0]);
-
 }
 
 void Player::moveOX(float tx)

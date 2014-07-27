@@ -5,9 +5,10 @@ class Player
 {
 public:
 	Sprite *player;
+	int life;
+	float speed;
 
 	Player();
-	Player(float vertex_buffer[], float texture_buffer[], unsigned int index_buffer[]);
 	~Player();
 
 	void Init(int shader_programme, const char *filename);
