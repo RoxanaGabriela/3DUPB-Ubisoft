@@ -3,14 +3,18 @@
 
 #include <vector>
 
-class Enemy;
-class Player;
-class Projectile;
+#define LEFT -1
+#define RIGHT 1
+#define UP 1
+#define DOWN -1
+
+#define SCREEN_LEFT -1.0f
+#define SCREEN_RIGHT 1.0f
+#define SCREEN_TOP 1.0f
+#define SCREEN_BOTTOM -1.0f
 
 void _print_shader_info_log(GLuint shader_index);
 char* LoadFileInMemory(const char* filename);
-int hit(Enemy* enemy, std::vector<Projectile*>* projectiles);
-int collide(Player* player, Enemy* enemy);
 
 #endif	// __H_UTILS_
 

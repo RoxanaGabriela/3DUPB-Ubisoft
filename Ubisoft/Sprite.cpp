@@ -13,6 +13,8 @@ Sprite::Sprite()
 	tex = 0;
 }
 
+
+
 Sprite::Sprite(float vertex_buffer[], float texture_buffer[], unsigned int index_buffer[])
 {
 	this->vertex_buffer = (float*)malloc(12 * sizeof(float));
@@ -29,12 +31,16 @@ Sprite::Sprite(float vertex_buffer[], float texture_buffer[], unsigned int index
 	tex = 0;
 }
 
+
+
 Sprite::~Sprite()
 {
 	free(vertex_buffer);
 	free(texture_buffer);
 	free(index_buffer);
 }
+
+
 
 void Sprite::Init(GLuint shader_programme, const char *filename)
 {
@@ -93,6 +99,8 @@ void Sprite::Init(GLuint shader_programme, const char *filename)
 	glUniform1i(basic_tex, 0); // use active texture 0
 }
 
+
+
 void Sprite::Draw()
 {
 	glActiveTexture(GL_TEXTURE0);
@@ -114,6 +122,8 @@ void Sprite::Draw()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
 }
+
+
 
 // exemplu de implementare
 void Sprite::FlipTexture(unsigned char* image_data, int x, int y, int n)
@@ -138,7 +148,9 @@ void Sprite::FlipTexture(unsigned char* image_data, int x, int y, int n)
 	}
 }
 
-float Sprite::minX()
+
+
+float Sprite::Left()
 {
 	float minX = 1;
 	for (int i = 0; i < 12; i += 3) {
@@ -147,7 +159,9 @@ float Sprite::minX()
 	return minX;
 }
 
-float Sprite::maxX()
+
+
+float Sprite::Right()
 {
 	float maxX = -1;
 	for (int i = 0; i < 12; i += 3) {
@@ -156,7 +170,9 @@ float Sprite::maxX()
 	return maxX;
 }
 
-float Sprite::minY()
+
+
+float Sprite::Bottom()
 {
 	float minY = 1;
 	for (int i = 0; i < 12; i += 3) {
@@ -165,7 +181,9 @@ float Sprite::minY()
 	return minY;
 }
 
-float Sprite::maxY()
+
+
+float Sprite::Top()
 {
 	float maxY = -1;
 
@@ -174,6 +192,8 @@ float Sprite::maxY()
 	}
 	return maxY;
 }
+
+
 
 void Sprite::show()
 {

@@ -22,6 +22,7 @@
     <ProjectGuid>{FEBBA60E-D1BF-491B-A553-A4862F1263F1}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Ubisoft</RootNamespace>
+    <ProjectName>SpaceShooter</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -148,9 +149,9 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Camera.h" />
+    <ClInclude Include="Background.h" />
     <ClInclude Include="Enemy.h" />
-    <ClInclude Include="Loaded_Textures.h" />
+    <ClInclude Include="EnemyManager.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Projectile.h" />
     <ClInclude Include="resource.h" />
@@ -162,9 +163,9 @@
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Background.cpp" />
     <ClCompile Include="Enemy.cpp" />
-    <ClCompile Include="Loaded_Textures.cpp" />
+    <ClCompile Include="EnemyManager.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Projectile.cpp" />
     <ClCompile Include="Sprite.cpp" />
@@ -176,7 +177,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Ubisoft.cpp" />
+    <ClCompile Include="Main.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>

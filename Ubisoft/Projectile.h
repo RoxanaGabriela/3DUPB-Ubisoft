@@ -1,22 +1,30 @@
-#pragma once
-#include "Sprite.h"
+#ifndef __H_PROJECTILE
+#define __H_PROJECTILE
 
-#define PLAYER 0
-#define ENEMY 1
+#define SPEED 0.07f
+
+class Sprite;
 
 class Projectile
 {
-private:
-	int owner;
 public:
-	Sprite *projectile;
-
 	Projectile();
-	Projectile(float vertex_buffer[], int owner);
+	Projectile(int shader_programme, Sprite* owner, int dir);
 	~Projectile();
 
 	void Init(int shader_programme, const char *filename);
 	void Draw();
-	void move(float ty);
+	void Update();
+
+	float Bottom();
+	float Top();
+	float Left();
+	float Right();
+
+private:
+	Sprite* sprite;
+	int dir;
+	float speed;
 };
 
+#endif	// __H_PROJECTILE

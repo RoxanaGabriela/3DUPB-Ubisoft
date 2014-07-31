@@ -1,16 +1,18 @@
 #include "stdafx.h"
 #include "Projectile.h"
-
+#include "Sprite.h"
+#include "Utils.h"
 
 Projectile::Projectile()
 {
-	projectile = NULL;
-	owner = -1;
+	sprite = NULL;
+	dir = 0;
 }
 
-Projectile::Projectile(float vertex_buffer[], int owner)
+
+
+Projectile::Projectile(int shader_programme, Sprite* owner, int dir)
 {
-	this->owner = owner;
 	float texture_buffer[] = {
 		0.0f, 1.0f,
 		0.0f, 0.0f,
@@ -23,63 +25,64 @@ Projectile::Projectile(float vertex_buffer[], int owner)
 		1, 2, 3
 	};
 
-	float minX = 1;
-	float maxX = -1;
-	float minY = 1;
-	float maxY = -1;
-	for (int i = 0; i < 12; i += 3) {
-		if (minX > vertex_buffer[i]) minX = vertex_buffer[i];
-		if (maxX < vertex_buffer[i]) maxX = vertex_buffer[i];
-
-		if (minY > vertex_buffer[i + 1]) minY = vertex_buffer[i + 1];
-		if (maxY < vertex_buffer[i + 1]) maxY = vertex_buffer[i + 1];
-	}
-
-	if (owner == PLAYER) {
+	if (dir == UP) {
 		float vb[] = {
-			minX + (maxX - minX) / 4, maxY + 0.2f, 0.0f,
-			minX + (maxX - minX) / 4, maxY, 0.0f,
-			maxX - (maxX - minX) / 4, maxY, 0.0f,
-			maxX - (maxX - minX) / 4, maxY + 0.2f, 0.0f
+			owner->Left()	+ (owner->Right() - owner->Left()) / 4, owner->Top() + 0.2f, 0.0f,
+			owner->Left()	+ (owner->Right() - owner->Left()) / 4, owner->Top(), 0.0f,
+			owner->Right()	- (owner->Right() - owner->Left()) / 4, owner->Top(), 0.0f,
+			owner->Right()	- (owner->Right() - owner->Left()) / 4, owner->Top() + 0.2f, 0.0f
 		};
-		projectile = new Sprite(vb, texture_buffer, index_buffer);
+		sprite = new Sprite(vb, texture_buffer, index_buffer);
+		sprite->Init(shader_programme, "../data/Space/Rockets/rocket_type_A0000.png");
 	}
-	else  {
+	else  {	// dir == DOWN
 		float vb[] = {
-			minX + (maxX - minX) / 4 + (maxX - minX) / 8, minY, 0.0f,
-			minX + (maxX - minX) / 4 + (maxX - minX) / 8, minY - 0.1f, 0.0f,
-			maxX - (maxX - minX) / 4 - (maxX - minX) / 8, minY - 0.1f, 0.0f,
-			maxX - (maxX - minX) / 4 - (maxX - minX) / 8, minY, 0.0f
+			owner->Left()	+ (owner->Right() - owner->Left()) / 4 + (owner->Right() - owner->Left()) / 8, owner->Bottom(), 0.0f,
+			owner->Left()	+ (owner->Right() - owner->Left()) / 4 + (owner->Right() - owner->Left()) / 8, owner->Bottom() - 0.1f, 0.0f,
+			owner->Right()	- (owner->Right() - owner->Left()) / 4 - (owner->Right() - owner->Left()) / 8, owner->Bottom() - 0.1f, 0.0f,
+			owner->Right()	- (owner->Right() - owner->Left()) / 4 - (owner->Right() - owner->Left()) / 8, owner->Bottom(), 0.0f
 		};
-		projectile = new Sprite(vb, texture_buffer, index_buffer);
+		sprite = new Sprite(vb, texture_buffer, index_buffer);
+		sprite->Init(shader_programme, "../data/Space/Rockets/rocket_type_B0008.png");
 	}
+
+	this->dir = dir;
+	speed = SPEED;
 }
+
+
 
 Projectile::~Projectile()
 {
-	free(projectile);
+	free(sprite);
 }
 
-void Projectile::Init(int shader_programme, const char *filename)
-{
-	projectile->Init(shader_programme, filename);
-}
+
 
 void Projectile::Draw()
 {
-	projectile->Draw();
+	sprite->Draw();
 }
 
-void Projectile::move(float ty)
+
+
+void Projectile::Update()
 {
-	glm::mat4 transMatrix = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, ty, 0, 1);
+	glm::mat4 transMatrix = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, speed * DELTA_TIME * dir, 0, 1);
 	for (int i = 0; i < 12; i += 3) {
-		glm::vec4 vector = glm::vec4(projectile->vertex_buffer[i], projectile->vertex_buffer[i + 1],
-			projectile->vertex_buffer[i + 2], 1);
+		glm::vec4 vector = glm::vec4(sprite->vertex_buffer[i], sprite->vertex_buffer[i + 1],
+			sprite->vertex_buffer[i + 2], 1);
 		glm::vec4 result = transMatrix * vector;
 
-		projectile->vertex_buffer[i] = result.x;
-		projectile->vertex_buffer[i + 1] = result.y;
-		projectile->vertex_buffer[i + 2] = result.z;
+		sprite->vertex_buffer[i] = result.x;
+		sprite->vertex_buffer[i + 1] = result.y;
+		sprite->vertex_buffer[i + 2] = result.z;
 	}
 }
+
+
+
+float Projectile::Bottom()	{ return sprite->Bottom(); }
+float Projectile::Top()		{ return sprite->Top(); }
+float Projectile::Left()	{ return sprite->Left(); }
+float Projectile::Right()	{ return sprite->Right(); }

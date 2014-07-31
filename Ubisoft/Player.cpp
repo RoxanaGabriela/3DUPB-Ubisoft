@@ -1,16 +1,27 @@
 #include "stdafx.h"
 #include "Player.h"
-
+#include "Projectile.h"
+#include "Enemy.h"
+#include "Sprite.h"
+#include "Utils.h"
 
 Player::Player()
 {
-	speed = 2.0f;
+	sprite = NULL;
+	life = -1;
+	speed = 0;
+	timeBetweenProjectiles = TIME_BETWEEN_PROJECTILES_MAX;
+}
 
+
+
+Player::Player(int shader_programme)
+{
 	float vertex_buffer[] = {
-		0.15f, -0.65f, 0.0f,
-		0.15f, -0.95f, 0.0f,
-		-0.15f, -0.95f, 0.0f,
-		-0.15f, -0.65f, 0.0f,
+		0.10f, -0.65f, 0.0f,
+		0.10f, -0.95f, 0.0f,
+		-0.10f, -0.95f, 0.0f,
+		-0.10f, -0.65f, 0.0f,
 	};
 
 	float texture_buffer[] = {
@@ -25,89 +36,124 @@ Player::Player()
 		1, 2, 3
 	};
 
-	player = new Sprite(vertex_buffer, texture_buffer, index_buffer);
+	sprite = new Sprite(vertex_buffer, texture_buffer, index_buffer);
+	sprite->Init(shader_programme, "../data/Space/Player/player0000.png");
+	
+	life = 20;
+	speed = PLAYER_SPEED;
+	timeBetweenProjectiles = TIME_BETWEEN_PROJECTILES_MAX;
 }
+
+
 
 Player::~Player()
 {
-	free(player);
+	free(sprite);
+	projectiles.clear();
 }
 
-void Player::Init(int shader_programme, const char * filename)
-{
-	player->Init(shader_programme, filename);
-	life = 3;
-}
+
 
 void Player::Draw()
 {
-	player->Draw();
+	sprite->Draw();
+	for (int i = 0; i < projectiles.size(); i++) {
+		projectiles[i]->Draw();
+	}
 }
 
-void Player::moveOY(float ty)
+
+
+void Player::Update()
 {
-	glm::mat4 transMatrix = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, ty, 0, 1);
-	for (int i = 0; i < 12; i += 3) {
-		glm::vec4 vector = glm::vec4(player->vertex_buffer[i], player->vertex_buffer[i + 1], 
-									player->vertex_buffer[i + 2], 1);
-		glm::vec4 result = transMatrix * vector;
-		
-		player->vertex_buffer[i] = result.x;
-		player->vertex_buffer[i + 1] = result.y;
-		player->vertex_buffer[i + 2] = result.z;
+	timeBetweenProjectiles += DELTA_TIME;
+	for (int i = 0; i < projectiles.size(); i++) {
+		projectiles[i]->Update();
+		if (projectiles[i]->Bottom() >= 1) {
+			free(projectiles[i]);
+			projectiles.erase(projectiles.begin() + i);
+		}
 	}
 }
 
-void Player::moveOX(float tx)
+
+
+int Player::Collide(Enemy* enemy)
 {
-	glm::mat4 transMatrix = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, tx, 0, 0, 1);
-	for (int i = 0; i < 12; i += 3) {
-		glm::vec4 vector = glm::vec4(player->vertex_buffer[i], player->vertex_buffer[i + 1],
-			player->vertex_buffer[i + 2], 1);
-		glm::vec4 result = transMatrix * vector;
+	for (int i = 0; i < enemy->projectiles.size(); i++) {
+		if (Left() < enemy->projectiles[i]->Right() &&
+			Right() > enemy->projectiles[i]->Left() &&
+			Bottom() < enemy->projectiles[i]->Top() &&
+			Top() > enemy->projectiles[i]->Bottom()) {
 
-		player->vertex_buffer[i] = result.x;
-		player->vertex_buffer[i + 1] = result.y;
-		player->vertex_buffer[i + 2] = result.z;
+			free(enemy->projectiles[i]);
+			enemy->projectiles.erase(enemy->projectiles.begin() + i);
+			life--;
+
+			if (life == 0) {
+				return TRUE;
+			}
+		}
 	}
+	return FALSE;
 }
 
-void Player::rotate(float angle)
+
+
+void Player::MoveOY(int dir)
 {
-	float originX, originY;
-	float minX = 1;
-	float maxX = -1;
-	float minY = 1;
-	float maxY = -1;
+	if ((dir == UP && Top() <= SCREEN_TOP) || (dir == DOWN && Bottom() >= SCREEN_BOTTOM)) {
+		glm::mat4 transMatrix = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, speed * DELTA_TIME * dir, 0, 1);
+		for (int i = 0; i < 12; i += 3) {
+			glm::vec4 vector = glm::vec4(sprite->vertex_buffer[i], sprite->vertex_buffer[i + 1],
+				sprite->vertex_buffer[i + 2], 1);
+			glm::vec4 result = transMatrix * vector;
 
-	for (int i = 0; i < 12; i += 3) {
-		if (minX > player->vertex_buffer[i]) minX = player->vertex_buffer[i];
-		if (maxX < player->vertex_buffer[i]) maxX = player->vertex_buffer[i];
-
-		if (minY > player->vertex_buffer[i + 1]) minY = player->vertex_buffer[i + 1];
-		if (maxY < player->vertex_buffer[i + 1]) maxY = player->vertex_buffer[i + 1];
+			sprite->vertex_buffer[i] = result.x;
+			sprite->vertex_buffer[i + 1] = result.y;
+			sprite->vertex_buffer[i + 2] = result.z;
+		}
 	}
-	originX = minX + (maxX - minX) / 2;
-	originY = minY + (maxY - minY) / 2;
-	moveOX(-originX);
-	moveOY(-originY);
-
-	glm::mat4 rotateMatrix = glm::mat4(cosf(angle), sinf(angle), 0, 0, -sinf(angle), cosf(angle), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-	for (int i = 0; i < 12; i += 3) {
-		glm::vec4 vector = glm::vec4(player->vertex_buffer[i], player->vertex_buffer[i + 1],
-			player->vertex_buffer[i + 2], 1);
-		glm::vec4 result = rotateMatrix * vector;
-
-		player->vertex_buffer[i] = result.x;
-		player->vertex_buffer[i + 1] = result.y;
-		player->vertex_buffer[i + 2] = result.z;
-	}
-
-	moveOX(originX);
-	moveOY(originY);
 }
+
+
+
+
+void Player::MoveOX(int dir)
+{
+	if ((dir == RIGHT && Right() <= SCREEN_RIGHT) || (dir == LEFT && Left() >= SCREEN_LEFT)) {
+		glm::mat4 transMatrix = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, speed * DELTA_TIME * dir, 0, 0, 1);
+		for (int i = 0; i < 12; i += 3) {
+			glm::vec4 vector = glm::vec4(sprite->vertex_buffer[i], sprite->vertex_buffer[i + 1],
+				sprite->vertex_buffer[i + 2], 1);
+			glm::vec4 result = transMatrix * vector;
+
+			sprite->vertex_buffer[i] = result.x;
+			sprite->vertex_buffer[i + 1] = result.y;
+			sprite->vertex_buffer[i + 2] = result.z;
+		}
+	}
+}
+
+
+
+void Player::Fire()
+{
+	if (timeBetweenProjectiles >= TIME_BETWEEN_PROJECTILES_MAX) {
+		projectiles.push_back(new Projectile(sprite->shader_programme, sprite, UP));
+		timeBetweenProjectiles = 0;
+	}
+}
+
+
+float Player::Bottom()	{ return sprite->Bottom(); }
+float Player::Top()		{ return sprite->Top(); }
+float Player::Left()	{ return sprite->Left(); }
+float Player::Right()	{ return sprite->Right(); }
+
+
 
 void Player::show()
 {
-	player->show();
+	sprite->show();
 }

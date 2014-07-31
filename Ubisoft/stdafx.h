@@ -20,13 +20,7 @@
 #include "glm\glm.hpp"
 
 #define PI 3.1415926f
-
-#define LINE 0
-#define CIRCLE 1
-#define SIN 2
-
-#define LEFT 0
-#define RIGHT 1
+#define DELTA_TIME 1.0f / 60.0f
 
 #define TRUE 1
 #define FALSE 0
