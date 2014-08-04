@@ -1,51 +1,51 @@
-#ifndef __H_ENEMY
-#define __H_ENEMY
+#ifndef __ENEMY_H_
+#define __ENEMY_H_
 
 #include <vector>
 
-#define MAX_TIME_BETWEEN_PROJECTILES 20.0f
-#define ENEMY_SPEED 0.03f
-
-#define CENTRE_TO_LEFT 0
-#define RIGHT_TO_LEFT 1
-#define LEFT_TO_RIGHT 2
-#define CENTRE_TO_RIGHT 3
+#define ENEMY_SPEED 0.04f
+#define ENEMY_LIFE 4 
+#define TIME_BETWEEN_PROJECTILES 15.0f
 
 class Sprite;
-class Projectile;
 class Player;
+class Projectile;
 
 class Enemy
 {
 public:
 	std::vector<Projectile*> projectiles;
-	int dir;
 
 	Enemy();
-	Enemy(int shader_programme, int left);
+	Enemy(int shader_programme);
 	~Enemy();
 
 	void Draw();
 	void Update();
-	int Collide(Player* player);
+	void DrawProjectiles();
 
-	void MoveToLeft();
-	void MoveToRight();
+	void Move(glm::vec3 dir);
+	bool Collide(Player* player);
+	void Fire();
 
-	float Bottom();
-	float Top();
-	float Left();
-	float Right();
+	void SetPosition(glm::vec3 pos);
+	glm::vec3 GetPosition();
+	void SetDirection(glm::vec3 dir);
+	glm::vec3 GetDirection();
 
-	void show();
+	float Left() { return GetPosition().x; }
+	float Right() { return GetPosition().x + 0.2f; }
+	float Bottom() { return GetPosition().y; }
+	float Top() { return GetPosition().y + 0.36f; }
 
 private:
 	Sprite* sprite;
-	int life;
-	glm::mat4 transMatrix;
 	float speed;
+	glm::vec3 direction;
+	short type;
+	int life;
+
 	float timeBetweenProjectiles;
-	float leftSide;
 };
 
-#endif	// __H_ENEMY
+#endif	// __ENEMY_H_

@@ -1,52 +1,90 @@
 #include "stdafx.h"
+
+#include "Common.h"
 #include "Projectile.h"
 #include "Sprite.h"
-#include "Utils.h"
+
 
 Projectile::Projectile()
 {
 	sprite = NULL;
-	dir = 0;
+	speed = SPEED;
+	dir = glm::vec3(0.0f, 0.0f, 0.0f);
 }
 
 
 
-Projectile::Projectile(int shader_programme, Sprite* owner, int dir)
+Projectile::Projectile(int shader_programme, Sprite* owner, float owner_type, float type)
 {
-	float texture_buffer[] = {
-		0.0f, 1.0f,
-		0.0f, 0.0f,
-		1.0f, 0.0f,
-		1.0f, 1.0f
-	};
-
-	unsigned int index_buffer[] = {
-		0, 1, 3,
-		1, 2, 3
-	};
-
-	if (dir == UP) {
-		float vb[] = {
-			owner->Left()	+ (owner->Right() - owner->Left()) / 4, owner->Top() + 0.2f, 0.0f,
-			owner->Left()	+ (owner->Right() - owner->Left()) / 4, owner->Top(), 0.0f,
-			owner->Right()	- (owner->Right() - owner->Left()) / 4, owner->Top(), 0.0f,
-			owner->Right()	- (owner->Right() - owner->Left()) / 4, owner->Top() + 0.2f, 0.0f
+	glm::vec3 pos = owner->GetPosition();
+	dir = glm::vec3(0.0f, 0.0f, 0.0f);
+	sprite = new Sprite();	
+	if (owner_type == PLAYER) {
+		float vbo[] = {
+			0.02f, 0.1f, 0.0f,
+			0.02f, -0.1f, 0.0f,
+			-0.02f, -0.1f, 0.0f,
+			-0.02f, 0.1f, 0.0f
 		};
-		sprite = new Sprite(vb, texture_buffer, index_buffer);
-		sprite->Init(shader_programme, "../data/Space/Rockets/rocket_type_A0000.png");
+
+		sprite->Init(shader_programme, "../data/Space/FX/gun_blast.png", vbo);
+		pos.y += 0.15f;
+		dir.y = UP;
 	}
-	else  {	// dir == DOWN
-		float vb[] = {
-			owner->Left()	+ (owner->Right() - owner->Left()) / 4 + (owner->Right() - owner->Left()) / 8, owner->Bottom(), 0.0f,
-			owner->Left()	+ (owner->Right() - owner->Left()) / 4 + (owner->Right() - owner->Left()) / 8, owner->Bottom() - 0.1f, 0.0f,
-			owner->Right()	- (owner->Right() - owner->Left()) / 4 - (owner->Right() - owner->Left()) / 8, owner->Bottom() - 0.1f, 0.0f,
-			owner->Right()	- (owner->Right() - owner->Left()) / 4 - (owner->Right() - owner->Left()) / 8, owner->Bottom(), 0.0f
+	else if (owner_type == MASTER) {
+		if (type == CENTER) {
+			float vbo[] = {
+				0.02f, 0.05f, 0.0f,
+				0.02f, -0.05f, 0.0f,
+				-0.02f, -0.05f, 0.0f,
+				-0.02f, 0.05f, 0.0f
+			};
+
+			sprite->Init(shader_programme, "../data/Space/Rockets/rocket_type_B0008.png", vbo);
+			pos.y -= 0.25f;
+			dir.y = DOWN;
+		}
+		else if (type == LEFT) {
+			float vbo[] = {
+				0.02f, 0.05f, 0.0f,
+				0.02f, -0.05f, 0.0f,
+				-0.02f, -0.05f, 0.0f,
+				-0.02f, 0.05f, 0.0f
+			};
+
+			sprite->Init(shader_programme, "../data/Space/Rockets/rocket_type_B0008.png", vbo);
+			pos.x -= 0.20f;
+			pos.y -= 0.20f;
+			dir.y = DOWN;
+		}
+		else {	// type == RIGHT
+			float vbo[] = {
+				0.02f, 0.05f, 0.0f,
+				0.02f, -0.05f, 0.0f,
+				-0.02f, -0.05f, 0.0f,
+				-0.02f, 0.05f, 0.0f
+			};
+
+			sprite->Init(shader_programme, "../data/Space/Rockets/rocket_type_B0008.png", vbo);
+			pos.x += 0.20f;
+			pos.y -= 0.20f;
+			dir.y = DOWN;
+		}
+	}
+	else if (owner_type == CRESCENT || owner_type == FIGHTER || owner_type == SCYTHE || owner_type == SLICER) {
+		float vbo[] = {
+			0.02f, 0.05f, 0.0f,
+			0.02f, -0.05f, 0.0f,
+			-0.02f, -0.05f, 0.0f,
+			-0.02f, 0.05f, 0.0f
 		};
-		sprite = new Sprite(vb, texture_buffer, index_buffer);
-		sprite->Init(shader_programme, "../data/Space/Rockets/rocket_type_B0008.png");
+
+		sprite->Init(shader_programme, "../data/Space/Rockets/rocket_type_B0008.png", vbo);
+		pos.y -= 0.10f;
+		dir.y = DOWN;
 	}
 
-	this->dir = dir;
+	SetPosition(pos);
 	speed = SPEED;
 }
 
@@ -55,6 +93,7 @@ Projectile::Projectile(int shader_programme, Sprite* owner, int dir)
 Projectile::~Projectile()
 {
 	free(sprite);
+	sprite = NULL;
 }
 
 
@@ -68,21 +107,24 @@ void Projectile::Draw()
 
 void Projectile::Update()
 {
-	glm::mat4 transMatrix = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, speed * DELTA_TIME * dir, 0, 1);
-	for (int i = 0; i < 12; i += 3) {
-		glm::vec4 vector = glm::vec4(sprite->vertex_buffer[i], sprite->vertex_buffer[i + 1],
-			sprite->vertex_buffer[i + 2], 1);
-		glm::vec4 result = transMatrix * vector;
+	dir = glm::normalize(dir);
+	glm::vec3 pos = GetPosition();
+	pos += dir * speed * DT;
+	SetPosition(pos);
 
-		sprite->vertex_buffer[i] = result.x;
-		sprite->vertex_buffer[i + 1] = result.y;
-		sprite->vertex_buffer[i + 2] = result.z;
-	}
+	sprite->Update();
 }
 
 
 
-float Projectile::Bottom()	{ return sprite->Bottom(); }
-float Projectile::Top()		{ return sprite->Top(); }
-float Projectile::Left()	{ return sprite->Left(); }
-float Projectile::Right()	{ return sprite->Right(); }
+void Projectile::SetPosition(glm::vec3 pos)
+{
+	sprite->SetPosition(pos);
+}
+
+
+
+glm::vec3 Projectile::GetPosition()
+{
+	return sprite->GetPosition();
+}

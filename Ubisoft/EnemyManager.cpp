@@ -1,23 +1,37 @@
 #include "stdafx.h"
 #include "EnemyManager.h"
 #include "Enemy.h"
-#include "Utils.h"
+#include "EnemyMaster.h"
 #include "Player.h"
+#include "Common.h"
+#include "LifeBar.h"
 
 EnemyManager::EnemyManager()
 {
 	shader_programme = -1;
-	enemiesNb = 0;
-	screen = SCREEN_BOTTOM;
+	lifeBar_shader_programme = -1;
+	timeBetweenEnemies = TIME_BETWEEN_ENEMIES;
+	maxTime = TIME_BETWEEN_ENEMIES;
+	master = NULL;
+	lifeBar = NULL;
+	goMaster = false;
+	hits = HITS;
+	enemiesBetweenPowers = 0;
 }
 
 
 
-EnemyManager::EnemyManager(int shader_programme)
+EnemyManager::EnemyManager(int shader_programme, int lifeBar_shader_programme)
 {
 	this->shader_programme = shader_programme;
-	enemiesNb = 0;
-	screen = SCREEN_BOTTOM;
+	this->lifeBar_shader_programme = lifeBar_shader_programme;
+	timeBetweenEnemies = TIME_BETWEEN_ENEMIES;
+	maxTime = TIME_BETWEEN_ENEMIES;
+	master = NULL;
+	goMaster = false;
+	hits = HITS;
+	lifeBar = new LifeBar();
+	enemiesBetweenPowers = 0;
 }
 
 
@@ -25,14 +39,52 @@ EnemyManager::EnemyManager(int shader_programme)
 EnemyManager::~EnemyManager()
 {
 	enemies.clear();
+
+	free(master);
+	master = NULL;
+
+	free(lifeBar);
+	lifeBar = NULL;
+
+	powers.clear();
 }
 
 
 
 void EnemyManager::Draw()
 {
-	for (int i = 0; i < enemies.size(); i++) {
-		enemies[i]->Draw();
+	if (goMaster == false) {
+		for (unsigned int i = 0; i < enemies.size(); i++) {
+			enemies[i]->Update();
+			enemies[i]->Draw();
+			enemies[i]->DrawProjectiles();
+
+			if (enemies[i]->GetPosition().y <= SCREEN_BOTTOM) {
+				Remove(i);
+			}
+		}
+		timeBetweenEnemies += DT;
+		if (maxTime >= 15.0f) maxTime -= DT;
+
+		Add();
+	}
+	else if (goMaster == true) {
+		master->Update();
+		master->Draw();
+		master->DrawProjectiles();
+
+		if (master->GetLife() >= 0) {
+			float vbo[] = {
+				-0.95f,								0.95f, 0.0f,
+				-0.95f,								0.92f, 0.0f,
+				-0.95f + master->GetLife() * 0.02f,	0.92f, 0.0f,
+				-0.95f + master->GetLife() * 0.02f,	0.95f, 0.0f
+			};
+
+			lifeBar->Init(lifeBar_shader_programme, vbo);
+			lifeBar->Update();
+			lifeBar->Draw();
+		}
 	}
 }
 
@@ -40,79 +92,62 @@ void EnemyManager::Draw()
 
 void EnemyManager::Update(Player* player)
 {
-	for (int i = 0; i < enemies.size(); i++) {
-		enemies[i]->Update();
-		
-		if (player->Collide(enemies[i]) == TRUE) {
-			printf("GAME OVER!!!!\n");
-		}
-		if (enemies[i]->Collide(player) == TRUE) {
-			free(enemies[i]);
-			enemies.erase(enemies.begin() + i);
-		}
-	}
+	if (goMaster == false) {
+		for (unsigned int i = 0; i < enemies.size(); i++) {
+			if (player->Collide(enemies[i]) == true) {
+				player->lost = true;
+				printf("Game over!!!! You lost!!\n");
+			}
 
-	if (enemies.size() == 0 || 
-		enemies[enemies.size() - 1]->Bottom() <= screen ||
-		(enemies[enemies.size() - 1]->Top() < SCREEN_TOP && enemies[enemies.size() - 1]->Left() < SCREEN_LEFT) ||
-		(enemies[enemies.size() - 1]->Top() < SCREEN_TOP && enemies[enemies.size() - 1]->Right() > SCREEN_RIGHT)) {
-		Add();
-	}
-
-	if (enemies[enemies.size() - 1]->Top() <= SCREEN_BOTTOM) {
-		Remove(enemies.size() - 1);
-	}
-
-	for (int i = 0; i < enemies.size(); i++) {
-		for (int j = 0; j < enemies.size(); j++) {
-			if (enemies[i]->Left() < enemies[j]->Right() &&
-				enemies[i]->Right() > enemies[j]->Left() &&
-				enemies[i]->Bottom() < enemies[j]->Top() &&
-				enemies[i]->Top() > enemies[j]->Bottom()) {
-
-				enemies[i]->dir = -enemies[i]->dir;
-				enemies[j]->dir = -enemies[j]->dir;
+			if (enemies[i]->Collide(player) == true) {
+				free(enemies[i]);
+				enemies.erase(enemies.begin() + i);
+				hits--;
+				if (hits == 0){
+					master = new EnemyMaster(shader_programme);
+					goMaster = true;
+					enemies.clear();
+					break;
+				}
 			}
 		}
 	}
+	else if (goMaster == true) {
+		if (player->Collide(master) == true) {
+			player->lost = true;
+			printf("Game over!!!! You lost!!\n");
+		}
+
+		if (master->Collide(player) == true) {
+			glm::vec3 dir = master->GetDirection();
+			dir.y = UP;
+			master->SetDirection(dir);
+			master->hit = true;
+
+			if (master->GetPosition().y >= SCREEN_TOP) {
+				free(master);
+				goMaster = -1;
+			}
+		}
+	}
+	else {	// goMaster = -1;
+		printf("Game over!!!! You won!!\n");
+	}
 }
-
-
-
 void EnemyManager::Add()
 {
-	int leftSide = 85 - (rand() % 170);
-	
-	if (enemiesNb < 5) {
-		enemies.push_back(new Enemy(shader_programme, leftSide));
-		enemiesNb++;
-	}
-	else {
-		enemies.push_back(new Enemy(shader_programme, leftSide));
-		enemies.push_back(new Enemy(shader_programme, -leftSide));
-		enemiesNb += 2;
-
-		if (enemiesNb > 20) {
-			screen = SCREEN_TOP - 0.35f;
-		}
-		else if (enemiesNb > 15) {
-			screen = SCREEN_TOP - 0.5f;
-		}
-		else if (enemiesNb > 9) {
-			screen = SCREEN_TOP - 1.0f;
-		}		
+	if (timeBetweenEnemies >= maxTime) {
+		enemies.push_back(new Enemy(shader_programme));
+		timeBetweenEnemies = 0;
 	}
 }
 
 
 
-void EnemyManager::Remove(int i)
+void EnemyManager::Remove(unsigned int i)
 {
 	if (i < enemies.size()) {
 		free(enemies[i]);
 		enemies.erase(enemies.begin() + i);
-	}
-	else {
-		fprintf(stderr, "Index out of bounds!\n");
 	}
 }

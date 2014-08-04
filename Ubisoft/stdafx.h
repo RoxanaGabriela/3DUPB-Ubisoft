@@ -18,9 +18,3 @@
 #include <GL/glew.h> // include GLEW and new version of GL on Windows
 #include <GLFW32/glfw3.h> // GLFW helper library
 #include "glm\glm.hpp"
-
-#define PI 3.1415926f
-#define DELTA_TIME 1.0f / 60.0f
-
-#define TRUE 1
-#define FALSE 0

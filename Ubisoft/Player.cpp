@@ -1,47 +1,42 @@
 #include "stdafx.h"
+#include "glm\gtx\transform.hpp"
+#include "glm\gtc\type_ptr.hpp"
+#include "Common.h"
+
 #include "Player.h"
-#include "Projectile.h"
-#include "Enemy.h"
 #include "Sprite.h"
-#include "Utils.h"
+#include "Enemy.h"
+#include "Projectile.h"
+#include "EnemyMaster.h"
 
 Player::Player()
 {
 	sprite = NULL;
-	life = -1;
-	speed = 0;
-	timeBetweenProjectiles = TIME_BETWEEN_PROJECTILES_MAX;
+	speed = PLAYER_SPEED;
+	life = PLAYER_LIFE;
+	timeBetweenProjectiles = PLAYER_TIME_BETWEEN_PROJECTILES;
+	lost = false;
 }
 
 
 
 Player::Player(int shader_programme)
 {
-	float vertex_buffer[] = {
-		0.10f, -0.65f, 0.0f,
-		0.10f, -0.95f, 0.0f,
-		-0.10f, -0.95f, 0.0f,
-		-0.10f, -0.65f, 0.0f,
+	float vbo[] = {
+		0.1f, 0.18f, 0.0f,
+		0.1f, -0.18f, 0.0f,
+		-0.1f, -0.18f, 0.0f,
+		-0.1f, 0.18f, 0.0f
 	};
 
-	float texture_buffer[] = {
-		0.0f, 1.0f,
-		0.0f, 0.0f,
-		1.0f, 0.0f,
-		1.0f, 1.0f
-	};
-
-	unsigned int index_buffer[] = {
-		0, 1, 3,
-		1, 2, 3
-	};
-
-	sprite = new Sprite(vertex_buffer, texture_buffer, index_buffer);
-	sprite->Init(shader_programme, "../data/Space/Player/player0000.png");
+	sprite = new Sprite();
+	sprite->Init(shader_programme, "../data/Space/Player/player0000.png", vbo);
+	SetPosition(glm::vec3(0.0f, -0.80f, -10.0f));
 	
-	life = 20;
 	speed = PLAYER_SPEED;
-	timeBetweenProjectiles = TIME_BETWEEN_PROJECTILES_MAX;
+	life = PLAYER_LIFE;
+	timeBetweenProjectiles = PLAYER_TIME_BETWEEN_PROJECTILES;
+	lost = false;
 }
 
 
@@ -49,27 +44,123 @@ Player::Player(int shader_programme)
 Player::~Player()
 {
 	free(sprite);
+	sprite = NULL;
+
 	projectiles.clear();
 }
-
 
 
 void Player::Draw()
 {
 	sprite->Draw();
-	for (int i = 0; i < projectiles.size(); i++) {
-		projectiles[i]->Draw();
-	}
 }
 
 
 
 void Player::Update()
+{	
+	sprite->Update();
+
+	glm::vec3 pos = GetPosition();
+	
+	if (pos.x <= SCREEN_LEFT) pos.x = SCREEN_LEFT + 0.01f;
+	if (pos.x >= SCREEN_RIGHT) pos.x = SCREEN_RIGHT -0.01f;
+	if (pos.y <= SCREEN_BOTTOM) pos.y = SCREEN_BOTTOM + 0.01f;
+	if (pos.y >= SCREEN_TOP) pos.y = SCREEN_TOP - 0.01f;
+
+	SetPosition(pos);
+
+	timeBetweenProjectiles += DT;
+}
+
+
+
+void Player::Move(glm::vec3 dir)
 {
-	timeBetweenProjectiles += DELTA_TIME;
-	for (int i = 0; i < projectiles.size(); i++) {
+	if (lost == false) {
+		dir = glm::normalize(dir);
+
+		glm::vec3 pos = GetPosition();
+		pos = pos + dir * speed * DT;
+
+		sprite->SetPosition(pos);
+	}
+}
+
+
+
+bool Player::Collide(Enemy* enemy)
+{
+	for (int i = 0; i < enemy->projectiles.size(); i++) {
+		if (Left() < enemy->projectiles[i]->Right() && Right() > enemy->projectiles[i]->Left() &&
+			Bottom() < enemy->projectiles[i]->Top() && Top() > enemy->projectiles[i]->Bottom()) {
+			free(enemy->projectiles[i]);
+			enemy->projectiles.erase(enemy->projectiles.begin() + i);
+		
+			life--;
+			if (life == 0) {
+				return true;
+			}
+		}
+	}
+
+	if (Left() <= enemy->Right() && Right() >= enemy->Left() && Bottom() <= enemy->Top() && Top() >= enemy->Bottom()) {
+		life--;
+		printf("%d\n", life);
+		if (life == 0) {
+			return true;
+		}
+		for (int i = 0; i < 450; i++) {
+			enemy->Move(glm::vec3(-enemy->GetDirection().x, -enemy->GetDirection().y, enemy->GetDirection().z));
+		}
+		enemy->SetDirection(glm::vec3(-enemy->GetDirection().x, enemy->GetDirection().y, enemy->GetDirection().z));
+	}
+
+	return false;
+}
+
+
+
+bool Player::Collide(EnemyMaster* enemy)
+{
+	for (int i = 0; i < enemy->projectiles.size(); i++) {
+		if (Left() < enemy->projectiles[i]->Right() && Right() > enemy->projectiles[i]->Left() &&
+			Bottom() < enemy->projectiles[i]->Top() && Top() > enemy->projectiles[i]->Bottom()) {
+			free(enemy->projectiles[i]);
+			enemy->projectiles.erase(enemy->projectiles.begin() + i);
+
+			life--;
+			if (life == 0) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+
+
+void Player::Fire()
+{	
+	if (lost == false) {
+		if (timeBetweenProjectiles >= PLAYER_TIME_BETWEEN_PROJECTILES) {
+			projectiles.push_back(new Projectile(sprite->shader_programme, sprite, PLAYER, CENTER));
+
+			timeBetweenProjectiles = 0;
+		}
+	}
+}
+
+
+
+void Player::DrawProjectiles()
+{
+	for (unsigned int i = 0; i < projectiles.size(); i++) {
 		projectiles[i]->Update();
-		if (projectiles[i]->Bottom() >= 1) {
+		projectiles[i]->Draw();
+
+		if (projectiles[i]->GetPosition().x >= SCREEN_TOP) {
 			free(projectiles[i]);
 			projectiles.erase(projectiles.begin() + i);
 		}
@@ -78,82 +169,28 @@ void Player::Update()
 
 
 
-int Player::Collide(Enemy* enemy)
+void Player::SetPosition(glm::vec3 pos)
 {
-	for (int i = 0; i < enemy->projectiles.size(); i++) {
-		if (Left() < enemy->projectiles[i]->Right() &&
-			Right() > enemy->projectiles[i]->Left() &&
-			Bottom() < enemy->projectiles[i]->Top() &&
-			Top() > enemy->projectiles[i]->Bottom()) {
-
-			free(enemy->projectiles[i]);
-			enemy->projectiles.erase(enemy->projectiles.begin() + i);
-			life--;
-
-			if (life == 0) {
-				return TRUE;
-			}
-		}
-	}
-	return FALSE;
+	sprite->SetPosition(pos);
 }
 
 
 
-void Player::MoveOY(int dir)
+glm::vec3 Player::GetPosition()
 {
-	if ((dir == UP && Top() <= SCREEN_TOP) || (dir == DOWN && Bottom() >= SCREEN_BOTTOM)) {
-		glm::mat4 transMatrix = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, speed * DELTA_TIME * dir, 0, 1);
-		for (int i = 0; i < 12; i += 3) {
-			glm::vec4 vector = glm::vec4(sprite->vertex_buffer[i], sprite->vertex_buffer[i + 1],
-				sprite->vertex_buffer[i + 2], 1);
-			glm::vec4 result = transMatrix * vector;
-
-			sprite->vertex_buffer[i] = result.x;
-			sprite->vertex_buffer[i + 1] = result.y;
-			sprite->vertex_buffer[i + 2] = result.z;
-		}
-	}
+	return sprite->GetPosition();
 }
 
 
 
-
-void Player::MoveOX(int dir)
+int Player::GetLife()
 {
-	if ((dir == RIGHT && Right() <= SCREEN_RIGHT) || (dir == LEFT && Left() >= SCREEN_LEFT)) {
-		glm::mat4 transMatrix = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, speed * DELTA_TIME * dir, 0, 0, 1);
-		for (int i = 0; i < 12; i += 3) {
-			glm::vec4 vector = glm::vec4(sprite->vertex_buffer[i], sprite->vertex_buffer[i + 1],
-				sprite->vertex_buffer[i + 2], 1);
-			glm::vec4 result = transMatrix * vector;
-
-			sprite->vertex_buffer[i] = result.x;
-			sprite->vertex_buffer[i + 1] = result.y;
-			sprite->vertex_buffer[i + 2] = result.z;
-		}
-	}
+	return life;
 }
-
-
-
-void Player::Fire()
-{
-	if (timeBetweenProjectiles >= TIME_BETWEEN_PROJECTILES_MAX) {
-		projectiles.push_back(new Projectile(sprite->shader_programme, sprite, UP));
-		timeBetweenProjectiles = 0;
-	}
-}
-
-
-float Player::Bottom()	{ return sprite->Bottom(); }
-float Player::Top()		{ return sprite->Top(); }
-float Player::Left()	{ return sprite->Left(); }
-float Player::Right()	{ return sprite->Right(); }
 
 
 
 void Player::show()
 {
-	sprite->show();
+	printf("Left = %.2f Right = %.2f Bottom = %.2f Top = %.2f", Left(), Right(), Bottom(), Top());
 }

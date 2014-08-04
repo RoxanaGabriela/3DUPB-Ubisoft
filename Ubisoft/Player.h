@@ -1,20 +1,22 @@
-#ifndef __H_PLAYER
-#define __H_PLAYER
+#ifndef __PLAYER_H_
+#define __PLAYER_H_
 
 #include <vector>
 
-#define PLAYER_SPEED 3.0f
-#define TIME_BETWEEN_PROJECTILES_MAX 6.0f
+#define PLAYER_SPEED 2.0f
+#define PLAYER_TIME_BETWEEN_PROJECTILES 2.0f
+#define PLAYER_LIFE 20
 
 class Sprite;
 class Enemy;
 class Projectile;
+class EnemyMaster;
 
 class Player
 {
 public:
 	std::vector<Projectile*> projectiles;
-	float timeBetweenProjectiles;
+	int lost;
 
 	Player();
 	Player(int shader_programme);
@@ -22,23 +24,31 @@ public:
 
 	void Draw();
 	void Update();
-	int Collide(Enemy* enemy);
-
-	void MoveOY(int dir);
-	void MoveOX(int dir);
+	void DrawProjectiles();
+	
+	void Move(glm::vec3 dir);
+	bool Collide(Enemy* enemy);
+	bool Collide(EnemyMaster* enemy);
 	void Fire();
 
-	float Bottom();
-	float Top();
-	float Left();
-	float Right();
+	void SetPosition(glm::vec3 pos);
+	glm::vec3 GetPosition();
+	int GetLife();
+
+	float Left() { return GetPosition().x - 0.05f; }
+	float Right() { return GetPosition().x + 0.1f; }
+	float Bottom() { return GetPosition().y; }
+	float Top() { return GetPosition().y + 0.18f; }
 
 	void show();
 
 private:
 	Sprite* sprite;
-	int life;
 	float speed;
+
+	float timeBetweenProjectiles;
+
+	int life;
 };
 
-#endif	// __H_PLAYER
+#endif	// __PLAYER_H_

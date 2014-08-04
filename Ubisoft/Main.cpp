@@ -1,16 +1,15 @@
 #include "stdafx.h"
 #include "stb_image.h"
-
-#include "Background.h"
-#include "EnemyManager.h"
-#include "Player.h"
-#include "Enemy.h"
-#include "Projectile.h"
-#include "Utils.h"
-
 #include <vector>
 #include <map>
-#include "GL\glew.h"
+
+#include "Utils.h"
+#include "Common.h"
+#include "Background.h"
+#include "Player.h"
+#include "EnemyManager.h"
+#include "LifeBar.h"
+#include "EnemyMaster.h"
 
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
@@ -23,31 +22,37 @@
 #endif
 #endif  // _DEBUG
 
-// WIDTH-ul si HEIGHT-ul initial
+// WIDTH-ul si HEIGHT-ul ecranului
 #define W_WIDTH 1024
-#define W_HEIGHT 768
+#define W_HEIGHT 640
 
-Player *player;
-std::vector<Enemy*> enemies;
 GLuint shader_programme;
+GLFWwindow* window;
+
+Player* player;
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	glm::vec3 dir(0.0f, 0.0f, 0.0f);
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
-	else if (key == GLFW_KEY_UP) {
-		player->MoveOY(UP);
+	if (key == GLFW_KEY_UP) {
+		dir.y = UP;
+		player->Move(dir);
 	}
-	else if (key == GLFW_KEY_DOWN) {
-		player->MoveOY(DOWN);
+	if (key == GLFW_KEY_DOWN) {
+		dir.y = DOWN;
+		player->Move(dir);
 	}
-	else if (key == GLFW_KEY_LEFT) {
-		player->MoveOX(LEFT);
+	if (key == GLFW_KEY_LEFT) {
+		dir.x = LEFT;
+		player->Move(dir);
 	}
-	else if (key == GLFW_KEY_RIGHT) {
-		player->MoveOX(RIGHT);
+	if (key == GLFW_KEY_RIGHT) {
+		dir.x = RIGHT;
+		player->Move(dir);
 	}
-	else if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
 		player->Fire();
 	}
 }
@@ -64,7 +69,7 @@ int main() {
 	}
 
 	// Se creeaza fereastra
-	GLFWwindow* window = glfwCreateWindow(W_WIDTH, W_HEIGHT, "Ubisoft", NULL, NULL);
+	window = glfwCreateWindow(W_WIDTH, W_HEIGHT, "Ubisoft", NULL, NULL);
 	if (!window) {
 		// nu am reusit sa facem fereastra, oprim totul si dam mesaj de eroare
 		printf("ERROR: could not open window with GLFW3\n");
@@ -77,54 +82,14 @@ int main() {
 	// Pornit extension handler-ul
 	glewInit();
 
-	// Vedem versiunile
-	const GLubyte* renderer = glGetString(GL_RENDERER); //renderer string
-	const GLubyte* version = glGetString(GL_VERSION); // version string
-	printf("Renderer: %s\n", renderer);
-	printf("OpenGL version supported %s\n", version);
+	GLuint shader_programme = GetShaderProgramme("../data/vertexShader.glsl", "../data/pixelShader.glsl");
+	GLuint shader_programme1 = GetShaderProgramme("../data/vertexShader1.glsl", "../data/pixelShader1.glsl");
 
-	const char * vertex_shader = LoadFileInMemory("../data/vertexShader.glsl");
-	if (vertex_shader == NULL) fprintf(stderr, "Error opening vertex shader!\n");
-
-	const char * fragment_shader = LoadFileInMemory("../data/pixelShader.glsl");
-	if (fragment_shader == NULL) fprintf(stderr, "Error openning pixel shader!\n");
-
-	int params;
-	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vs, 1, &vertex_shader, NULL);
-	glCompileShader(vs);
-	glGetShaderiv(vs, GL_COMPILE_STATUS, &params); // iei statusul 
-	if (GL_TRUE != params)
-	{
-		fprintf(stderr, "ERROR : GL shader index %i did not compile\ n", vs);
-		_print_shader_info_log(vs); return false; // or exit or something 
-	}
-
-	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fs, 1, &fragment_shader, NULL);
-	glCompileShader(fs);
-	glGetShaderiv(fs, GL_COMPILE_STATUS, &params); // iei statusul 
-	if (GL_TRUE != params)
-	{
-		fprintf(stderr, "ERROR : GL shader index %i did not compile\ n", fs);
-		_print_shader_info_log(fs); return false; // or exit or something 
-	}
-
-	shader_programme = glCreateProgram();
-	glAttachShader(shader_programme, fs);
-	glAttachShader(shader_programme, vs);
-	glLinkProgram(shader_programme);
-
-	delete[] vertex_shader;
-	delete[] fragment_shader;
-	
 	Background* background = new Background(shader_programme);
-
 	player = new Player(shader_programme);
-
-	//enemies.push_back(new Enemy(shader_programme));
-	EnemyManager *em = new EnemyManager(shader_programme);
-
+	EnemyManager* manager = new EnemyManager(shader_programme, shader_programme1);
+	LifeBar* lifeBar = new LifeBar();
+	
 	// Enable blending
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -134,28 +99,34 @@ int main() {
 		//..... Randare................. 
 		// stergem ce s-a desenat anterior
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		// spunem ce shader vom folosi pentru desenare
-		glUseProgram(shader_programme);
-		
+	
+		background->Update();
 		background->Draw();
-		
-		player->Draw();
-		player->Update();
 
-		em->Draw();
-		em->Update(player);
+		player->Update();
+		player->Draw();
+		player->DrawProjectiles();
+
+		manager->Update(player);
+		manager->Draw();
+
+		if (player->GetLife() >= 0) {
+			float vbo[] = {
+				0.95f, -0.92f, 0.0f,
+				0.95f, -0.95f, 0.0f,
+				0.95f - player->GetLife() * 0.03f, -0.95f, 0.0f,
+				0.95f - player->GetLife() * 0.03f, -0.92f, 0.0f
+			};
+
+			lifeBar->Init(shader_programme1, vbo);
+			lifeBar->Update();
+			lifeBar->Draw();
+		}
 
 		// facem swap la buffere (Double buffer)
 		glfwSwapBuffers(window);
 
 		glfwPollEvents();
 	}
-
-	glfwDestroyWindow(window);
-	glfwTerminate();
-	free(player);
-	for (int i = 0; i < enemies.size(); i++)
-		free(enemies[i]);
-	enemies.clear();
 	return 0;
 }

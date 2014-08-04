@@ -1,55 +1,86 @@
 #include "stdafx.h"
-#include <stdlib.h>
 
 #include "Enemy.h"
-#include "Player.h"
 #include "Sprite.h"
+#include "Player.h"
 #include "Projectile.h"
-#include "Utils.h"
+#include "Common.h"
 
 Enemy::Enemy()
 {
 	sprite = NULL;
-	timeBetweenProjectiles = MAX_TIME_BETWEEN_PROJECTILES;
-	dir = 0;
+	speed = ENEMY_SPEED;
+	type = -1;
+	direction = glm::vec3(0.0f, 0.0f, 0.0f);
+	life = ENEMY_LIFE;
+	timeBetweenProjectiles = TIME_BETWEEN_PROJECTILES;
 }
 
 
 
-Enemy::Enemy(int shader_programme, int left)
+Enemy::Enemy(int shader_programme)
 {
-	leftSide = ((float)left) / 100;
-	
-	float vertex_buffer[] = {
-		leftSide + 0.25f, 1.25f, 0.0f,
-		leftSide + 0.25f, 1.0f, 0.0f,
-		leftSide, 1.0f, 0.0f,
-		leftSide, 1.25f, 0.0f
+	float vbo[] = {
+		0.1f, 0.18f, 0.0f,
+		0.1f, -0.18f, 0.0f,
+		-0.1f, -0.18f, 0.0f,
+		-0.1f, 0.18f, 0.0f
 	};
 
-	float texture_buffer[] = {
-		0.0f, 1.0f,
-		0.0f, 0.0f,
-		1.0f, 0.0f,
-		1.0f, 1.0f
-	};
+	sprite = new Sprite();
+	type = rand() % 8;
+	switch (type)
+	{
+	case BUG_EYE:
+		sprite->Init(shader_programme, "../data/Space/Enemies/bug_eye0000.png", vbo);
+		break;
 
-	unsigned int index_buffer[] = {
-		0, 1, 3,
-		1, 2, 3
-	};
+	case CRESCENT:
+		sprite->Init(shader_programme, "../data/Space/Enemies/crescent0000.png", vbo);
+		break;
 
-	sprite = new Sprite(vertex_buffer, texture_buffer, index_buffer);
-	sprite->Init(shader_programme, "../data/Space/Enemies/scythe0000.png");
+	case FIGHTER:
+		sprite->Init(shader_programme, "../data/Space/Enemies/fighter0000.png", vbo);
+		break;
 
-	life = 5;
-	speed = ENEMY_SPEED;
-	timeBetweenProjectiles = MAX_TIME_BETWEEN_PROJECTILES;
-	if (Left() >= 0.0f) {
-		dir = LEFT;
+	case SAUCER_BLADES:
+		sprite->Init(shader_programme, "../data/Space/Enemies/saucer_blades0000.png", vbo);
+		break;
+
+	case SAUCER:
+		sprite->Init(shader_programme, "../data/Space/Enemies/saucer0000.png", vbo);
+		break;
+
+	case SCYTHE:
+		sprite->Init(shader_programme, "../data/Space/Enemies/scythe0000.png", vbo);
+		break;
+
+	case SLICER:
+		sprite->Init(shader_programme, "../data/Space/Enemies/slicer0000.png", vbo);
+		break;
+
+	case SPIKEY:
+		sprite->Init(shader_programme, "../data/Space/Enemies/spikey0000.png", vbo);
+		break;
+
+	default:
+		break;
 	}
-	else {	// Right <= 0.0f
-		dir = RIGHT;
+
+	glm::vec3 pos((rand() % 200) - 100, 1.0f, -10.0f);
+	pos.x /= 100;
+	SetPosition(pos);
+	
+	timeBetweenProjectiles = TIME_BETWEEN_PROJECTILES;
+	speed = ENEMY_SPEED;
+	life = ENEMY_LIFE;
+
+	direction = glm::vec3((rand() % 100), -1.0f, 0.0f);
+	if (pos.x < 0.0f) {
+		direction.x /= 100;
+	} 
+	else {	// pos.x >= 0.0f
+		direction.x /= -100;
 	}
 }
 
@@ -58,6 +89,8 @@ Enemy::Enemy(int shader_programme, int left)
 Enemy::~Enemy()
 {
 	free(sprite);
+	sprite = NULL;
+
 	projectiles.clear();
 }
 
@@ -66,52 +99,49 @@ Enemy::~Enemy()
 void Enemy::Draw()
 {
 	sprite->Draw();
-	for (int i = 0; i < projectiles.size(); i++) {
-		projectiles[i]->Draw();
-	}
 }
 
 
 
 void Enemy::Update()
 {
-	timeBetweenProjectiles += DELTA_TIME;
+	sprite->Update();
+	timeBetweenProjectiles += DT;
+	
+	Fire();
+	Move(direction);
+}
 
-	if (timeBetweenProjectiles >= MAX_TIME_BETWEEN_PROJECTILES) {
-		projectiles.push_back(new Projectile(sprite->shader_programme, sprite, DOWN));
 
-		timeBetweenProjectiles = 0;
-	}
 
-	for (int i = 0; i < projectiles.size(); i++) {
+void Enemy::DrawProjectiles()
+{
+	for (unsigned int i = 0; i < projectiles.size(); i++) {
 		projectiles[i]->Update();
-		if (projectiles[i]->Top() <= -1) {
+		projectiles[i]->Draw();
+
+		if (projectiles[i]->GetPosition().y <= SCREEN_BOTTOM) {
 			free(projectiles[i]);
 			projectiles.erase(projectiles.begin() + i);
 		}
-	}
-
-	if (dir == LEFT) {
-		MoveToLeft();
-	}
-	else {	// dir == RIGHT
-		MoveToRight();
-	}
-
-	for (int i = 0; i < 12; i += 3) {
-		glm::vec4 vector = glm::vec4(sprite->vertex_buffer[i], sprite->vertex_buffer[i + 1],
-			sprite->vertex_buffer[i + 2], 1);
-		glm::vec4 result = transMatrix * vector;
-
-		sprite->vertex_buffer[i] = result.x;
-		sprite->vertex_buffer[i + 1] = result.y;
-		sprite->vertex_buffer[i + 2] = result.z;
 	}
 }
 
 
 
-int Enemy::Collide(Player* player)
+void Enemy::Move(glm::vec3 dir)
+{
+	dir = glm::normalize(dir);
+
+	glm::vec3 pos = GetPosition();
+	pos += dir * speed * DT;
+
+	SetPosition(pos);
+}
+
+
+
+bool Enemy::Collide(Player* player)
 {
 	for (int i = 0; i < player->projectiles.size(); i++) {
 		if (Left() < player->projectiles[i]->Right() &&
@@ -124,47 +154,47 @@ int Enemy::Collide(Player* player)
 			life--;
 
 			if (life == 0) {
-				return TRUE;
+				return true;
 			}
 		}
 	}
-	return FALSE;
+
+	return false;
 }
 
 
 
-void Enemy::MoveToLeft()
+void Enemy::Fire()
 {
-	if (Bottom() >= 0.0f) {
-		transMatrix = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, speed * DELTA_TIME * LEFT * glm::sin(PI / 2), speed * DELTA_TIME * DOWN, 0, 1);
-	}
-	else {
-		transMatrix = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, speed * DELTA_TIME * LEFT * glm::sin(PI / 6), speed * DELTA_TIME * DOWN, 0, 1);
-	}
-}
-
-
-
-void Enemy::MoveToRight()
-{
-	if (Bottom() >= 0.0f) {
-		transMatrix = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, speed * DELTA_TIME * RIGHT * glm::sin(PI / 2), speed * DELTA_TIME * DOWN, 0, 1);
-	}
-	else {
-		transMatrix = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, speed * DELTA_TIME * RIGHT * glm::sin(PI / 6), speed * DELTA_TIME * DOWN, 0, 1);
+	if (timeBetweenProjectiles >= TIME_BETWEEN_PROJECTILES) {
+		projectiles.push_back(new Projectile(sprite->shader_programme, sprite, type, CENTER));
+		timeBetweenProjectiles = 0;
 	}
 }
 
 
 
-float Enemy::Bottom()	{ return sprite->Bottom(); }
-float Enemy::Top()		{ return sprite->Top(); }
-float Enemy::Left()	{ return sprite->Left(); }
-float Enemy::Right()	{ return sprite->Right(); }
+void Enemy::SetPosition(glm::vec3 pos) {
+	sprite->SetPosition(pos);
+}
 
 
 
-void Enemy::show()
+glm::vec3 Enemy::GetPosition()
 {
-	sprite->show();
+	return sprite->GetPosition();
+}
+
+
+
+void Enemy::SetDirection(glm::vec3 dir)
+{
+	direction = dir;
+}
+
+
+
+glm::vec3 Enemy::GetDirection()
+{
+	return direction;
 }

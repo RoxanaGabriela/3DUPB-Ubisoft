@@ -1,46 +1,34 @@
-#ifndef __H_SPRITE
-#define __H_SPRITE
-
-#include <stdlib.h>
-#include <GL/glew.h> // include GLEW and new version of GL on Windows
-#include <GLFW32/glfw3.h> // GLFW helper library
-#include "stb_image.h"
+#ifndef __SPRITE_H_
+#define __SPRITE_H_
 
 class Sprite
 {
 public:
-	float *vertex_buffer; // buffer cu vertecsi in RAM
-	int shader_programme;
+	GLuint modelMatrix_loc;
+	GLuint shader_programme;
 
 	Sprite();
-	Sprite(float vertex_buffer[], float texture_buffer[], unsigned int index_buffer[]);
-	virtual ~Sprite();
+	~Sprite();
 
-	void Init(GLuint shader_programme, const char *filename);
-	void FlipTexture(unsigned char* image_data, int x, int y, int n);
+	void Init(int shader_programme, const char* filename, float* v);
 	void Draw();
+	void Update();
 
-	float Left();
-	float Right();
-	float Bottom();
-	float Top();
-
-	void show();
-
+	void SetPosition(glm::vec3 position);
+	glm::vec3 GetPosition();
+	
 private:
-	GLuint vbo;
-	GLuint tex_vbo;
-	GLuint ibo;
-	GLuint tex;
-	GLuint pos;
+	GLuint vbo_loc;
+	GLuint tex_coord_loc;
+	GLuint ibo_loc;
+	GLuint vao_loc;
+	GLuint projectionMatrix_Loc;
+	GLuint tex, basic_tex;
 
-	GLint pos_loc;
-	GLint tex_loc;
-	GLint ModelMatrix_loc;
-	GLint basic_tex;
-
-	float *texture_buffer;
-	unsigned int *index_buffer; // buffer cu indecsii din RAM
+	glm::vec3 position;
+	
+	float aspectRatio;
 };
 
-#endif	// __H_SPRITE
+#endif	// __SPRITE_H_
+

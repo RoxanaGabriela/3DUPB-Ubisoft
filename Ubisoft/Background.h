@@ -1,5 +1,5 @@
-#ifndef __H_BACKGROUND
-#define __H_BACKGROUND
+#ifndef __BACKGROUND_H_
+#define __BACKGROUND_H_
 
 class Sprite;
 
@@ -11,10 +11,10 @@ public:
 	~Background();
 
 	void Draw();
+	void Update();
 
 private:
 	Sprite* sprite;
 };
 
-#endif	// __H_BACKGROUND
-
+#endif	// __BACKGROUND_H_
