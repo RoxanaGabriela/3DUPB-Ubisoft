@@ -16,6 +16,8 @@ class Power;
 class EnemyManager
 {
 public:
+	int hits;
+
 	EnemyManager();
 	EnemyManager(int shader_programme, int lifeBar_shader_programme);
 	~EnemyManager();
@@ -32,7 +34,6 @@ private:
 	std::vector<Enemy*> enemies;
 	float timeBetweenEnemies;
 	float maxTime;
-	int hits;
 
 	EnemyMaster* master;
 	int goMaster;

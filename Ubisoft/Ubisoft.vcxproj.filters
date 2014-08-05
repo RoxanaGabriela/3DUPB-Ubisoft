@@ -123,5 +123,8 @@
     <None Include="..\data\vertexShader1.glsl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\data\pixelShader2.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

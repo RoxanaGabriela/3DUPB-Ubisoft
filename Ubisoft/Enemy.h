@@ -4,7 +4,7 @@
 #include <vector>
 
 #define ENEMY_SPEED 0.04f
-#define ENEMY_LIFE 4 
+#define ENEMY_LIFE 3
 #define TIME_BETWEEN_PROJECTILES 15.0f
 
 class Sprite;

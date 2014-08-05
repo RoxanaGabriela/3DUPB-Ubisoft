@@ -191,6 +191,7 @@
   <ItemGroup>
     <None Include="..\data\pixelShader.glsl" />
     <None Include="..\data\pixelShader1.glsl" />
+    <None Include="..\data\pixelShader2.glsl" />
     <None Include="..\data\vertexShader.glsl" />
     <None Include="..\data\vertexShader1.glsl" />
   </ItemGroup>

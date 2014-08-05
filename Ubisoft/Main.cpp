@@ -31,28 +31,56 @@ GLFWwindow* window;
 
 Player* player;
 
+bool keys[256];
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	int up = 0;
+	int down = 1;
+	int right = 2;
+	int left = 3;
+	int space = 4;
+	
 	glm::vec3 dir(0.0f, 0.0f, 0.0f);
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	if (key == GLFW_KEY_UP) {
+		if (action == GLFW_PRESS) keys[up] = true;
+		if (action == GLFW_RELEASE) keys[up] = false;
+	}
+	if (key == GLFW_KEY_DOWN) {
+		if (action == GLFW_PRESS) keys[down] = true;
+		if (action == GLFW_RELEASE) keys[down] = false;
+	}
+	if (key == GLFW_KEY_LEFT) {
+		if (action == GLFW_PRESS) keys[left] = true;
+		if (action == GLFW_RELEASE) keys[left] = false;
+	}
+	if (key == GLFW_KEY_RIGHT) {
+		if (action == GLFW_PRESS) keys[right] = true;
+		if (action == GLFW_RELEASE) keys[right] = false;
+	}
+	if (key == GLFW_KEY_SPACE) {
+		if (action == GLFW_PRESS) keys[space] = true;
+		if (action == GLFW_RELEASE) keys[space] = false;
+	}
+
+	if (keys[up]) {
 		dir.y = UP;
 		player->Move(dir);
 	}
-	if (key == GLFW_KEY_DOWN) {
+	if (keys[down]) {
 		dir.y = DOWN;
 		player->Move(dir);
 	}
-	if (key == GLFW_KEY_LEFT) {
+	if (keys[left]) {
 		dir.x = LEFT;
 		player->Move(dir);
 	}
-	if (key == GLFW_KEY_RIGHT) {
+	if (keys[right]) {
 		dir.x = RIGHT;
 		player->Move(dir);
 	}
-	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+	if (keys[space]) {
 		player->Fire();
 	}
 }
@@ -84,12 +112,14 @@ int main() {
 
 	GLuint shader_programme = GetShaderProgramme("../data/vertexShader.glsl", "../data/pixelShader.glsl");
 	GLuint shader_programme1 = GetShaderProgramme("../data/vertexShader1.glsl", "../data/pixelShader1.glsl");
+	GLuint shader_programme2 = GetShaderProgramme("../data/vertexShader1.glsl", "../data/pixelShader2.glsl");
 
 	Background* background = new Background(shader_programme);
 	player = new Player(shader_programme);
 	EnemyManager* manager = new EnemyManager(shader_programme, shader_programme1);
 	LifeBar* lifeBar = new LifeBar();
-	
+	LifeBar* enemyHit = new LifeBar();
+
 	// Enable blending
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -109,6 +139,19 @@ int main() {
 
 		manager->Update(player);
 		manager->Draw();
+		
+		if (manager->hits >= 0) {
+			float vbo[] = {
+				0.95f, -0.88f, 0.0f,
+				0.95f, -0.90f, 0.0f,
+				0.95f - manager->hits * 0.03f, -0.88f, 0.0f,
+				0.95f - manager->hits * 0.03f, -0.90f, 0.0f
+			};
+
+			enemyHit->Init(shader_programme2, vbo);
+			enemyHit->Update();
+			enemyHit->Draw();
+		}
 
 		if (player->GetLife() >= 0) {
 			float vbo[] = {
