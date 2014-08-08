@@ -1,9 +1,9 @@
-﻿Build started 8/4/2014 8:18:12 PM.
-     1>Project "C:\Users\roxan_000\Desktop\program\Ubisoft\Ubisoft.vcxproj" on node 2 (Build target(s)).
+﻿Build started 8/6/2014 1:07:47 PM.
+     1>Project "C:\Users\roxan_000\Desktop\Ubisoft\SpaceShooter\Ubisoft\Ubisoft.vcxproj" on node 2 (Build target(s)).
      1>Link:
-         Ubisoft.vcxproj -> C:\Users\roxan_000\Desktop\program\Debug\SpaceShooter.exe
-     1>Done Building Project "C:\Users\roxan_000\Desktop\program\Ubisoft\Ubisoft.vcxproj" (Build target(s)).
+         Ubisoft.vcxproj -> C:\Users\roxan_000\Desktop\Ubisoft\SpaceShooter\Debug\SpaceShooter.exe
+     1>Done Building Project "C:\Users\roxan_000\Desktop\Ubisoft\SpaceShooter\Ubisoft\Ubisoft.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:00.12
+Time Elapsed 00:00:02.34

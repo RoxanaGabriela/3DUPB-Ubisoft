@@ -31,7 +31,7 @@ GLFWwindow* window;
 
 Player* player;
 
-bool keys[256];
+/*bool keys[256];
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	int up = 0;
@@ -83,7 +83,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	if (keys[space]) {
 		player->Fire();
 	}
-}
+}*/
 
 
 
@@ -124,12 +124,36 @@ int main() {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glfwSetKeyCallback(window, key_callback);
+	//glfwSetKeyCallback(window, key_callback);
 	while (!glfwWindowShouldClose(window)) {
 		//..... Randare................. 
 		// stergem ce s-a desenat anterior
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
+
+		glm::vec3 dir(0.0f, 0.0f, 0.0f);
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ESCAPE)) {
+			glfwSetWindowShouldClose(window, GL_TRUE);
+		}
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_UP)) {
+			dir.y = UP;
+			player->Move(dir);
+		}
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_DOWN)) {
+			dir.y = DOWN;
+			player->Move(dir);
+		}
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_LEFT)) {
+			dir.x = LEFT;
+			player->Move(dir);
+		}
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_RIGHT)) {
+			dir.x = RIGHT;
+			player->Move(dir);
+		}
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_SPACE)) {
+			player->Fire();
+		}
+
 		background->Update();
 		background->Draw();
 

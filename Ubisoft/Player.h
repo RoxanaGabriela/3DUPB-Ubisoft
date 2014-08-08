@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#define PLAYER_SPEED 2.0f
+#define PLAYER_SPEED 0.1f
 #define PLAYER_TIME_BETWEEN_PROJECTILES 2.0f
 #define PLAYER_LIFE 20
 

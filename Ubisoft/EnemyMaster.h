@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#define MASTER_SPEED 0.02f
+#define MASTER_SPEED 0.05f
 #define MASTER_LIFE 30
 #define MASTER_TIME_BETWEEN_PROJECTILES 15.0f
 
